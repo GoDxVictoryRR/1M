@@ -1,0 +1,41 @@
+# TerraOps .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+uv.lock
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node / frontend
+node_modules/
+apps/web/dist/
+apps/web/.vite/
+
+# Local data & databases
+.data/
+data/terraops.db
+*.sqlite
+*.sqlite3
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
