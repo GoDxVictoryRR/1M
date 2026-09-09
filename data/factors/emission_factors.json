@@ -1,0 +1,65 @@
+{
+  "version": "2026.1",
+  "factors": [
+    {
+      "factor_id": "us-epa-egrid-us-avg-2024",
+      "name": "US National Average Grid Electricity Emission Factor",
+      "value": 0.386,
+      "unit": "kgCO2e/kWh",
+      "geography": "US",
+      "scope": "Scope 2 (Location-based)",
+      "source": "US EPA eGRID (2024 Release, Summary Tables)",
+      "effective_date": "2024-01-30",
+      "is_synthetic": false,
+      "notes": "Calculated annual US average non-baseload and total output grid emission rate."
+    },
+    {
+      "factor_id": "us-epa-egrid-rfce-2024",
+      "name": "RFC East (PJM/US East) Subregion Grid Emission Factor",
+      "value": 0.312,
+      "unit": "kgCO2e/kWh",
+      "geography": "us-east",
+      "scope": "Scope 2 (Location-based)",
+      "source": "US EPA eGRID (2024 Release)",
+      "effective_date": "2024-01-30",
+      "is_synthetic": false,
+      "notes": "Subregion carbon intensity for Mid-Atlantic and East Coast facilities."
+    },
+    {
+      "factor_id": "us-epa-egrid-camx-2024",
+      "name": "CAMX (California / US West) Subregion Grid Emission Factor",
+      "value": 0.218,
+      "unit": "kgCO2e/kWh",
+      "geography": "us-west",
+      "scope": "Scope 2 (Location-based)",
+      "source": "US EPA eGRID (2024 Release)",
+      "effective_date": "2024-01-30",
+      "is_synthetic": false,
+      "notes": "Lower carbon intensity subregion reflecting higher renewable generation mix."
+    },
+    {
+      "factor_id": "eu-eea-avg-2024",
+      "name": "EU-27 Average Electricity Grid Greenhouse Gas Intensity",
+      "value": 0.251,
+      "unit": "kgCO2e/kWh",
+      "geography": "eu-central",
+      "scope": "Scope 2 (Location-based)",
+      "source": "European Environment Agency (EEA indicator 2024)",
+      "effective_date": "2024-03-15",
+      "is_synthetic": false,
+      "notes": "EU-27 aggregated operational electricity generation carbon intensity."
+    },
+    {
+      "factor_id": "synthetic-global-default-2026",
+      "name": "Illustrative Default Global Grid Factor",
+      "value": 0.400,
+      "unit": "kgCO2e/kWh",
+      "geography": "global-default",
+      "scope": "Scope 2 (Location-based)",
+      "source": "Illustrative synthetic factor for testing and fallback",
+      "effective_date": "2026-01-01",
+      "is_synthetic": true,
+      "notes": "Explicitly labeled illustrative synthetic factor. Use only as fallback when no regional factor is matched."
+    }
+  ]
+}
