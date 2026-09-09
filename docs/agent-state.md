@@ -1,12 +1,12 @@
 # TerraOps Agent State
 
 ## Project Status
-- **Current Status**: Active — Phase 3 (Analytics: Anomaly Detection & Forecasting) Completed Successfully
+- **Current Status**: Active — Phase 4 (Recommendations Engine) Completed Successfully
 - **Target Goal**: Build TerraOps sustainability decision-support product (SDG 13 Climate Action) adhering to zero-cost, local-first architecture.
 
 ## Current Phase
-- **Phase 3 — Analytics** (Completed)
-- **Next Phase**: Phase 4 — Recommendations (Rule/template-based intervention generation and transparent multi-factor scoring)
+- **Phase 4 — Recommendations** (Completed)
+- **Next Phase**: Phase 5 — RAG (Local Knowledge Base, Document Parser/Chunker, Local Embeddings, and Source-Aware Vector Retrieval)
 
 ## Completed Work
 - **Phase 0 — Inspect & Environment Assessment**:
@@ -25,16 +25,21 @@
   - Implemented deterministic metrics calculator in `packages/domain/metrics/calculator.py`.
   - Built API endpoints `apps/api/routers/data.py` and `apps/api/routers/metrics.py`.
 - **Phase 3 — Analytics**:
-  - Built explainable anomaly detector in `packages/domain/analytics/anomaly.py` supporting rolling z-score and scikit-learn Isolation Forest.
-  - Detected and verified synthetic spike on sample dataset (srv-compute-01 at 13:00, 35.4 kWh with utilization 99%, z >= 2.5).
-  - Built baseline time-series forecaster in `packages/domain/analytics/forecasting.py` using trend-augmented moving average with 95% confidence intervals and model evaluation metrics (MAE, RMSE, trend slope).
-  - Enforced insufficient data guardrails (returns controlled `insufficient_data` status when intervals < 6).
-  - Added API endpoints in `apps/api/routers/analytics.py` (`GET /api/analytics/anomalies`, `GET /api/analytics/forecast`).
-  - Added UI views for interactive anomaly inspection and forecast tables.
-  - All 31 automated tests passing cleanly.
+  - Built explainable anomaly detector in `packages/domain/analytics/anomaly.py` (rolling z-score and Isolation Forest).
+  - Built baseline time-series forecaster in `packages/domain/analytics/forecasting.py` with 95% confidence intervals and backtested error metrics.
+  - Added API endpoints in `apps/api/routers/analytics.py`.
+- **Phase 4 — Recommendations**:
+  - Implemented deterministic rule templates:
+    1. Right-size underutilized compute instances (mean utilization < 50%, peak < 70%).
+    2. Off-peak scheduling / idle power-down (22:00–06:00 low utilization).
+    3. Remediate anomalous power spikes (severity critical/high).
+  - Transparent mathematical scoring:
+    `overall_score = (impact * 0.45) + (confidence * 25) + ((1 - effort) * 20) + (data_quality * 10)`
+  - Added API endpoints `GET /api/recommendations` and `GET /api/recommendations/{id}`.
+  - Updated frontend with Priority Interventions ranking, savings badges (kWh & kgCO2e), and provenance details.
+  - Verified 37 automated tests passing with zero LLM dependency.
 
 ## Pending Work
-- **Phase 4 — Recommendations**: Deterministic intervention scoring and ranking engine (right-sizing, off-peak scheduling, idle elimination, anomaly investigation).
 - **Phase 5 — RAG**: Local knowledge base, vector index, and evidence retrieval.
 - **Phase 6 — Agent + Local LLM**: Allowlisted tool execution, Ollama adapter, no-LLM fallback.
 - **Phase 7 — UI**: Incremental dashboard integration.
@@ -43,27 +48,27 @@
 - **Phase 10 — Demo Packaging**: Documentation, demo dataset, and one-command local startup.
 
 ## Decisions Made
-1. **Explainable Anomaly Logic**: Every detected anomaly produces a plain-English explanation of deviation from rolling baseline (mean ± std) rather than an opaque black-box number.
-2. **Confidence Intervals**: Forecaster derives prediction margins from residual standard errors, guaranteeing non-negative lower bounds.
-3. **Graceful Insufficient Data**: If telemetry has fewer than 6 chronological points, the forecaster returns a structured non-error response informing the user.
+1. **Zero-LLM Recommendation Gate**: All recommendation ranking, impact calculations, and effort estimations are 100% deterministic code. LLMs will later be used only to explain recommendations in conversational Q&A.
+2. **Score Transparency**: Each intervention displays its impact, confidence, effort level, and mathematical formula provenance so users understand why interventions are prioritized.
 
 ## Assumptions
 - Telemetry intervals are periodic.
 - Energy values in kWh are non-negative.
 
 ## Known Issues
-- None. 31 automated tests passing. Frontend build passes in <1s.
+- None. 37 automated tests passing. Frontend build passes in 1s.
 
 ## Commands Used
-- `uv run --extra dev pytest -v` (31 passed in 3.68s)
+- `uv run --extra dev pytest -v` (37 passed in 3.91s)
 - `cd apps/web && npm run build` (Passed cleanly, 0 errors)
+- `git commit -m "..." && git push origin main` (Phase 3 committed and pushed)
 
 ## Test Status
-- Automated tests: 31 passed, 0 failed.
+- Automated tests: 37 passed, 0 failed.
 - Frontend build: Passed cleanly.
 
 ## Human Actions Required
 - None.
 
 ## Next Action
-- Commit Phase 3 to GitHub and proceed to Phase 4 (Recommendations Engine).
+- Commit Phase 4 to GitHub and proceed to Phase 5 (Knowledge Base & Local RAG Retrieval).

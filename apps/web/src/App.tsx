@@ -6,11 +6,13 @@ import {
   uploadCsvFile,
   fetchAnomalies,
   fetchForecast,
+  fetchRecommendations,
   HealthResponse,
   MetricsSummary,
   IngestionResult,
   AnomalyReport,
-  ForecastReport
+  ForecastReport,
+  RecommendationReport
 } from './api';
 
 export const App: React.FC = () => {
@@ -18,6 +20,7 @@ export const App: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
   const [anomalies, setAnomalies] = useState<AnomalyReport | null>(null);
   const [forecast, setForecast] = useState<ForecastReport | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationReport | null>(null);
   const [anomalyMethod, setAnomalyMethod] = useState<string>('rolling_zscore');
   const [ingestionResult, setIngestionResult] = useState<IngestionResult | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,14 +30,16 @@ export const App: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const refreshAnalytics = async (method = anomalyMethod) => {
+  const refreshAnalyticsAndRecs = async (method = anomalyMethod) => {
     try {
-      const [anomData, fcData] = await Promise.all([
+      const [anomData, fcData, recData] = await Promise.all([
         fetchAnomalies(method).catch(() => null),
-        fetchForecast(6).catch(() => null)
+        fetchForecast(6).catch(() => null),
+        fetchRecommendations().catch(() => null)
       ]);
       setAnomalies(anomData);
       setForecast(fcData);
+      setRecommendations(recData);
     } catch (e) {
       console.error(e);
     }
@@ -50,7 +55,7 @@ export const App: React.FC = () => {
       ]);
       setHealth(hData);
       setMetrics(mData);
-      await refreshAnalytics();
+      await refreshAnalyticsAndRecs();
     } catch (err: any) {
       setError(err.message || 'Error connecting to TerraOps API backend');
     } finally {
@@ -72,7 +77,7 @@ export const App: React.FC = () => {
       setSuccessMsg(`Successfully loaded demo dataset (${res.summary.valid_rows} rows, ${res.summary.total_energy_kwh} kWh).`);
       const mData = await fetchMetricsSummary();
       setMetrics(mData);
-      await refreshAnalytics();
+      await refreshAnalyticsAndRecs();
     } catch (err: any) {
       setError(err.message || 'Failed to load demo data');
     } finally {
@@ -93,7 +98,7 @@ export const App: React.FC = () => {
       setSuccessMsg(`Ingested CSV: ${res.summary.valid_rows} valid records processed, ${res.summary.error_count} rejected rows.`);
       const mData = await fetchMetricsSummary();
       setMetrics(mData);
-      await refreshAnalytics();
+      await refreshAnalyticsAndRecs();
     } catch (err: any) {
       setError(err.message || 'Failed to validate and ingest CSV');
     } finally {
@@ -134,9 +139,9 @@ export const App: React.FC = () => {
 
       {/* Hero Section */}
       <section className="hero-card">
-        <h2 className="hero-title">Operational Telemetry & Explainable Analytics</h2>
+        <h2 className="hero-title">Prioritized, Explainable Sustainability Interventions</h2>
         <p className="hero-description">
-          Automated sustainability decision support: calculate deterministic Scope 2 emissions, detect operational spikes with explainable statistics, and forecast baseline energy demands.
+          Deterministic decision-support transforming operational telemetry into audited carbon reductions, explainable anomaly mitigations, and ranked energy conservation measures.
         </p>
 
         {/* Action Toolbar */}
@@ -185,7 +190,7 @@ export const App: React.FC = () => {
 
       {/* Operational KPI Grid */}
       <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: '#fff' }}>
-        Deterministic Sustainability Metrics ({metrics?.records_count || 0} Records Analyzed)
+        Deterministic Operational Metrics ({metrics?.records_count || 0} Records Analyzed)
       </h3>
 
       <div className="status-grid">
@@ -241,6 +246,80 @@ export const App: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Prioritized Recommendations Section */}
+      <section className="details-section" style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 className="details-title" style={{ marginBottom: '0.25rem' }}>
+              <span>Prioritized Sustainability Interventions (Deterministic Ranking)</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              Transparent multi-attribute scoring combining estimated emissions impact (45%), statistical confidence (25%), implementation ease (20%), and data quality (10%).
+            </p>
+          </div>
+          {recommendations && (
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ padding: '0.4rem 0.8rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>
+                ⚡ -{recommendations.potential_energy_savings_kwh} kWh
+              </div>
+              <div style={{ padding: '0.4rem 0.8rem', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '6px', fontSize: '0.85rem', color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>
+                🌱 -{recommendations.potential_emissions_reduction_kgco2e} kgCO₂e
+              </div>
+            </div>
+          )}
+        </div>
+
+        {recommendations && recommendations.items.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {recommendations.items.map((rec, index) => (
+              <div key={rec.id} style={{ padding: '1.25rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>
+                      #{index + 1}
+                    </span>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>
+                      {rec.title}
+                    </span>
+                    <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
+                      {rec.category.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="badge badge-success" style={{ fontSize: '0.8rem' }}>
+                      Score: {rec.overall_score}/100
+                    </span>
+                    <span className={`badge ${rec.effort === 'low' ? 'badge-success' : rec.effort === 'medium' ? 'badge-info' : 'badge-warning'}`}>
+                      Effort: {rec.effort.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+                  {rec.description}
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <span>Target: <strong style={{ color: '#fff' }}>{rec.target_resource}</strong></span>
+                    <span>Energy Reduction: <strong style={{ color: 'var(--accent-green)' }}>{rec.estimated_energy_savings_kwh} kWh</strong></span>
+                    <span>Emissions Reduction: <strong style={{ color: 'var(--accent-blue)' }}>{rec.estimated_emissions_reduction_kgco2e} kgCO₂e</strong></span>
+                    <span>Confidence: <strong style={{ color: '#fff' }}>{(rec.confidence_score * 100).toFixed(0)}%</strong></span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
+                    👉 {rec.suggested_action}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '1rem 0' }}>
+            No recommendations generated. Load operational telemetry to compute interventions.
+          </p>
+        )}
+      </section>
 
       {/* Anomaly Detection Section */}
       <section className="details-section" style={{ marginBottom: '2rem' }}>
@@ -434,7 +513,7 @@ export const App: React.FC = () => {
         </table>
       </section>
 
-      {/* Row-Level Ingestion Validation Errors if any */}
+      {/* Ingestion Diagnostics if errors exist */}
       {ingestionResult && ingestionResult.errors.length > 0 && (
         <section className="details-section" style={{ marginBottom: '2rem', borderColor: 'var(--accent-amber)' }}>
           <h3 className="details-title" style={{ color: 'var(--accent-amber)' }}>
@@ -464,6 +543,7 @@ export const App: React.FC = () => {
       )}
 
       {/* System Environment */}
+
       <section className="details-section">
         <h3 className="details-title">
           <span>System Environment & Service Status</span>
@@ -484,7 +564,7 @@ export const App: React.FC = () => {
             </tr>
             <tr>
               <td>Current Project Gate</td>
-              <td>Phase 3: Analytics (Anomaly Detection & Forecasting) Complete</td>
+              <td>Phase 4: Recommendations Engine Complete</td>
             </tr>
           </tbody>
         </table>

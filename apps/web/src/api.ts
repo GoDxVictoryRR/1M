@@ -114,7 +114,6 @@ export interface ForecastPoint {
   upper_bound: number;
 }
 
-
 export interface ForecastReport {
   status: 'success' | 'insufficient_data';
   method: string;
@@ -128,6 +127,31 @@ export interface ForecastReport {
   }>;
   model_metrics: Record<string, number>;
   note?: string;
+}
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  category: string;
+  target_resource: string;
+  description: string;
+  estimated_energy_savings_kwh: number;
+  estimated_emissions_reduction_kgco2e: number;
+  impact_score: number;
+  confidence_score: number;
+  effort: 'low' | 'medium' | 'high';
+  effort_score: number;
+  data_quality_score: number;
+  overall_score: number;
+  suggested_action: string;
+  provenance: Record<string, any>;
+}
+
+export interface RecommendationReport {
+  total_interventions: number;
+  potential_energy_savings_kwh: number;
+  potential_emissions_reduction_kgco2e: number;
+  items: Recommendation[];
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -173,5 +197,11 @@ export async function fetchAnomalies(method = 'rolling_zscore'): Promise<Anomaly
 export async function fetchForecast(horizon = 6): Promise<ForecastReport> {
   const res = await fetch(`${API_BASE_URL}/api/analytics/forecast?horizon=${horizon}`);
   if (!res.ok) throw new Error(`Failed to fetch forecast: HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchRecommendations(): Promise<RecommendationReport> {
+  const res = await fetch(`${API_BASE_URL}/api/recommendations`);
+  if (!res.ok) throw new Error(`Failed to fetch recommendations: HTTP ${res.status}`);
   return res.json();
 }
