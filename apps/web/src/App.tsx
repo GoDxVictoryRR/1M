@@ -4,14 +4,21 @@ import {
   loadDemoData,
   fetchMetricsSummary,
   uploadCsvFile,
+  fetchAnomalies,
+  fetchForecast,
   HealthResponse,
   MetricsSummary,
-  IngestionResult
+  IngestionResult,
+  AnomalyReport,
+  ForecastReport
 } from './api';
 
 export const App: React.FC = () => {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
+  const [anomalies, setAnomalies] = useState<AnomalyReport | null>(null);
+  const [forecast, setForecast] = useState<ForecastReport | null>(null);
+  const [anomalyMethod, setAnomalyMethod] = useState<string>('rolling_zscore');
   const [ingestionResult, setIngestionResult] = useState<IngestionResult | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -19,6 +26,19 @@ export const App: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const refreshAnalytics = async (method = anomalyMethod) => {
+    try {
+      const [anomData, fcData] = await Promise.all([
+        fetchAnomalies(method).catch(() => null),
+        fetchForecast(6).catch(() => null)
+      ]);
+      setAnomalies(anomData);
+      setForecast(fcData);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const refreshAll = async () => {
     setLoading(true);
@@ -30,6 +50,7 @@ export const App: React.FC = () => {
       ]);
       setHealth(hData);
       setMetrics(mData);
+      await refreshAnalytics();
     } catch (err: any) {
       setError(err.message || 'Error connecting to TerraOps API backend');
     } finally {
@@ -51,6 +72,7 @@ export const App: React.FC = () => {
       setSuccessMsg(`Successfully loaded demo dataset (${res.summary.valid_rows} rows, ${res.summary.total_energy_kwh} kWh).`);
       const mData = await fetchMetricsSummary();
       setMetrics(mData);
+      await refreshAnalytics();
     } catch (err: any) {
       setError(err.message || 'Failed to load demo data');
     } finally {
@@ -71,11 +93,22 @@ export const App: React.FC = () => {
       setSuccessMsg(`Ingested CSV: ${res.summary.valid_rows} valid records processed, ${res.summary.error_count} rejected rows.`);
       const mData = await fetchMetricsSummary();
       setMetrics(mData);
+      await refreshAnalytics();
     } catch (err: any) {
       setError(err.message || 'Failed to validate and ingest CSV');
     } finally {
       setActionLoading(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleMethodChange = async (method: string) => {
+    setAnomalyMethod(method);
+    try {
+      const data = await fetchAnomalies(method);
+      setAnomalies(data);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -101,9 +134,9 @@ export const App: React.FC = () => {
 
       {/* Hero Section */}
       <section className="hero-card">
-        <h2 className="hero-title">Deterministic Operational Metrics & Emissions Engine</h2>
+        <h2 className="hero-title">Operational Telemetry & Explainable Analytics</h2>
         <p className="hero-description">
-          Ingest operational facility telemetry to calculate verified Scope 2 emissions, energy footprints, and utilization statistics using location-based grid carbon factors.
+          Automated sustainability decision support: calculate deterministic Scope 2 emissions, detect operational spikes with explainable statistics, and forecast baseline energy demands.
         </p>
 
         {/* Action Toolbar */}
@@ -209,13 +242,136 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Period over Period Comparison */}
+      {/* Anomaly Detection Section */}
+      <section className="details-section" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 className="details-title" style={{ marginBottom: '0.25rem' }}>
+              <span>Operational Anomaly Detection</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              Explainable statistical detection identifying abnormal energy spikes and equipment inefficiencies.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Method:</span>
+            <button
+              className={`btn btn-secondary ${anomalyMethod === 'rolling_zscore' ? 'btn-active' : ''}`}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', borderColor: anomalyMethod === 'rolling_zscore' ? 'var(--accent-green)' : undefined }}
+              onClick={() => handleMethodChange('rolling_zscore')}
+            >
+              Rolling Z-Score
+            </button>
+            <button
+              className={`btn btn-secondary ${anomalyMethod === 'isolation_forest' ? 'btn-active' : ''}`}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', borderColor: anomalyMethod === 'isolation_forest' ? 'var(--accent-green)' : undefined }}
+              onClick={() => handleMethodChange('isolation_forest')}
+            >
+              Isolation Forest
+            </button>
+          </div>
+        </div>
+
+        {anomalies && anomalies.items.length > 0 ? (
+          <table className="details-table">
+            <thead>
+              <tr style={{ color: 'var(--text-secondary)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '0.5rem 0' }}>Timestamp</th>
+                <th>Resource</th>
+                <th>Observed</th>
+                <th>Baseline</th>
+                <th>Score</th>
+                <th>Severity</th>
+                <th>Explanation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {anomalies.items.map((item, idx) => (
+                <tr key={idx}>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{new Date(item.timestamp).toLocaleTimeString()}</td>
+                  <td style={{ color: '#fff', fontWeight: 600 }}>{item.resource_id}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{item.actual_value} kWh</td>
+                  <td style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{item.expected_value} kWh</td>
+                  <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-amber)' }}>{item.anomaly_score}</td>
+                  <td>
+                    <span className={`badge ${item.severity === 'critical' ? 'badge-warning' : item.severity === 'high' ? 'badge-warning' : 'badge-info'}`}>
+                      {item.severity.toUpperCase()}
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', maxWidth: '380px' }}>{item.explanation}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '1rem 0' }}>
+            No anomalies detected exceeding the threshold (z ≥ 2.5). Telemetry is operating within standard baseline variance.
+          </p>
+        )}
+      </section>
+
+      {/* Near-Term Energy Forecasting Section */}
+      <section className="details-section" style={{ marginBottom: '2rem' }}>
+        <h3 className="details-title" style={{ marginBottom: '0.25rem' }}>
+          <span>Near-Term Energy Demand Forecast</span>
+        </h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+          Baseline projection using trend-augmented moving averages with 95% statistical confidence bounds.
+        </p>
+
+        {forecast && forecast.status === 'success' ? (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '0.85rem', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Model MAE</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{forecast.model_metrics.mae ?? '0.0'} kWh</div>
+              </div>
+              <div style={{ padding: '0.85rem', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Model RMSE</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{forecast.model_metrics.rmse ?? '0.0'} kWh</div>
+              </div>
+              <div style={{ padding: '0.85rem', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Trend Slope</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{forecast.model_metrics.trend_slope ?? '0.0'} kWh/hr</div>
+              </div>
+            </div>
+
+            <table className="details-table">
+              <thead>
+                <tr style={{ color: 'var(--text-secondary)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '0.5rem 0' }}>Forecast Horizon</th>
+                  <th>Predicted Consumption</th>
+                  <th>95% Lower Bound</th>
+                  <th>95% Upper Bound</th>
+                </tr>
+              </thead>
+              <tbody>
+                {forecast.points.map((pt, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>+{idx + 1}h ({new Date(pt.timestamp).toLocaleTimeString()})</td>
+                    <td style={{ color: 'var(--accent-blue)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{pt.predicted_energy_kwh} kWh</td>
+                    <td style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{pt.lower_bound} kWh</td>
+                    <td style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{pt.upper_bound} kWh</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--accent-amber)', fontSize: '0.9rem' }}>
+            ⚠ {forecast?.note || 'Insufficient historical intervals to compute forecasts. Load at least 6 operational records.'}
+          </div>
+        )}
+      </section>
+
+      {/* Period-over-Period Trend */}
       {metrics?.period_comparison && (
         <section className="details-section" style={{ marginBottom: '2rem' }}>
           <h3 className="details-title">
-            <span>Period-over-Period Trend Analysis</span>
+            <span>Period-over-Period Operational Comparison</span>
           </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
             {metrics.period_comparison.description}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
@@ -328,7 +484,7 @@ export const App: React.FC = () => {
             </tr>
             <tr>
               <td>Current Project Gate</td>
-              <td>Phase 2: Ingestion & Deterministic Metrics Complete</td>
+              <td>Phase 3: Analytics (Anomaly Detection & Forecasting) Complete</td>
             </tr>
           </tbody>
         </table>

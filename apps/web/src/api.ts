@@ -86,6 +86,50 @@ export interface MetricsSummary {
   by_resource_type: Record<string, { energy_kwh: number; emissions_kgco2e: number }>;
 }
 
+export interface AnomalyItem {
+  timestamp: string;
+  resource_id: string;
+  metric_name: string;
+  actual_value: number;
+  expected_value: number;
+  anomaly_score: number;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  method: string;
+  explanation: string;
+}
+
+export interface AnomalyReport {
+  total_records_analyzed: number;
+  anomalies_detected: number;
+  method: string;
+  threshold: number;
+  items: AnomalyItem[];
+}
+
+export interface ForecastPoint {
+  timestamp: string;
+  predicted_energy_kwh: number;
+  lower_bound: number;
+  upper_bound: number;
+}
+
+
+export interface ForecastReport {
+  status: 'success' | 'insufficient_data';
+  method: string;
+  historical_points: number;
+  horizon_intervals: number;
+  points: Array<{
+    timestamp: string;
+    predicted_energy_kwh: number;
+    lower_bound: number;
+    upper_bound: number;
+  }>;
+  model_metrics: Record<string, number>;
+  note?: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export async function fetchHealth(): Promise<HealthResponse> {
@@ -117,5 +161,17 @@ export async function uploadCsvFile(file: File): Promise<IngestionResult> {
     const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
     throw new Error(err.detail || 'Upload failed');
   }
+  return res.json();
+}
+
+export async function fetchAnomalies(method = 'rolling_zscore'): Promise<AnomalyReport> {
+  const res = await fetch(`${API_BASE_URL}/api/analytics/anomalies?method=${method}`);
+  if (!res.ok) throw new Error(`Failed to fetch anomalies: HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchForecast(horizon = 6): Promise<ForecastReport> {
+  const res = await fetch(`${API_BASE_URL}/api/analytics/forecast?horizon=${horizon}`);
+  if (!res.ok) throw new Error(`Failed to fetch forecast: HTTP ${res.status}`);
   return res.json();
 }
