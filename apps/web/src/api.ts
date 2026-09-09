@@ -154,6 +154,38 @@ export interface RecommendationReport {
   items: Recommendation[];
 }
 
+export interface RagCitation {
+  chunk_id: string;
+  source_id: string;
+  title: string;
+  publisher: string;
+  date: string;
+  tags: string[];
+  url: string;
+  section_title: string;
+  content: string;
+  similarity_score: number;
+}
+
+export interface RagSearchResponse {
+  query: string;
+  top_k: number;
+  threshold: number;
+  total_citations: number;
+  insufficient_evidence: boolean;
+  warning?: string;
+  citations: RagCitation[];
+}
+
+export interface RagDocumentInfo {
+  doc_id: string;
+  title: string;
+  publisher: string;
+  date: string;
+  tags: string[];
+  url: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export async function fetchHealth(): Promise<HealthResponse> {
@@ -203,5 +235,17 @@ export async function fetchForecast(horizon = 6): Promise<ForecastReport> {
 export async function fetchRecommendations(): Promise<RecommendationReport> {
   const res = await fetch(`${API_BASE_URL}/api/recommendations`);
   if (!res.ok) throw new Error(`Failed to fetch recommendations: HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function searchRagKnowledge(query: string, topK = 3): Promise<RagSearchResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/rag/search?query=${encodeURIComponent(query)}&top_k=${topK}`);
+  if (!res.ok) throw new Error(`Failed to search knowledge: HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchRagDocuments(): Promise<RagDocumentInfo[]> {
+  const res = await fetch(`${API_BASE_URL}/api/rag/documents`);
+  if (!res.ok) throw new Error(`Failed to fetch documents: HTTP ${res.status}`);
   return res.json();
 }

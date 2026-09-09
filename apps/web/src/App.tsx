@@ -7,12 +7,14 @@ import {
   fetchAnomalies,
   fetchForecast,
   fetchRecommendations,
+  searchRagKnowledge,
   HealthResponse,
   MetricsSummary,
   IngestionResult,
   AnomalyReport,
   ForecastReport,
-  RecommendationReport
+  RecommendationReport,
+  RagSearchResponse
 } from './api';
 
 export const App: React.FC = () => {
@@ -27,6 +29,9 @@ export const App: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [ragQuery, setRagQuery] = useState<string>('right-sizing compute instances');
+  const [ragResult, setRagResult] = useState<RagSearchResponse | null>(null);
+  const [ragLoading, setRagLoading] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -511,6 +516,104 @@ export const App: React.FC = () => {
             </tr>
           </tbody>
         </table>
+      </section>
+
+      {/* Phase 5: Semantic Knowledge & Evidence Retrieval (RAG) */}
+      <section className="details-section" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h3 className="details-title" style={{ margin: 0 }}>
+              <span>Local RAG Knowledge & Citation Engine</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+              Offline vectorless hybrid retrieval over verified sustainability standards with strict insufficient-evidence guardrail.
+            </p>
+          </div>
+          <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(52, 211, 153, 0.15)', color: 'var(--accent-emerald)', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
+            100% Offline • Zero-Cost
+          </span>
+        </div>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!ragQuery.trim()) return;
+            setRagLoading(true);
+            try {
+              const res = await searchRagKnowledge(ragQuery.trim(), 3);
+              setRagResult(res);
+            } catch (err: any) {
+              setError(err.message || 'RAG search failed');
+            } finally {
+              setRagLoading(false);
+            }
+          }}
+          style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}
+        >
+          <input
+            type="text"
+            value={ragQuery}
+            onChange={(e) => setRagQuery(e.target.value)}
+            placeholder="Search operational guidance (e.g. rightsizing, off-peak scheduling, scope 2, cooling)..."
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem'
+            }}
+          />
+          <button
+            type="submit"
+            className="btn btn-secondary"
+            disabled={ragLoading}
+            style={{ minWidth: '120px' }}
+          >
+            {ragLoading ? 'Searching...' : 'Search RAG'}
+          </button>
+        </form>
+
+        {ragResult && (
+          <div>
+            {ragResult.insufficient_evidence ? (
+              <div style={{ padding: '0.85rem 1rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid var(--accent-amber)', borderRadius: '6px', marginBottom: '1rem', color: 'var(--accent-amber)', fontSize: '0.875rem' }}>
+                ⚠️ <strong>Insufficient Evidence Guardrail Triggered:</strong> {ragResult.warning}
+              </div>
+            ) : (
+              <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(52, 211, 153, 0.1)', border: '1px solid var(--accent-emerald)', borderRadius: '6px', marginBottom: '1rem', color: 'var(--accent-emerald)', fontSize: '0.85rem' }}>
+                ✓ Found {ragResult.citations.length} authoritative citations (Score &gt;= {ragResult.threshold})
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+              {ragResult.citations.map((cite, i) => (
+                <div key={cite.chunk_id || i} style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '1rem', background: 'var(--bg-secondary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{cite.title}</h4>
+                    <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'var(--bg-tertiary)', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
+                      Sim: {cite.similarity_score.toFixed(2)}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    {cite.publisher} • {cite.date} • <em>{cite.section_title}</em>
+                  </div>
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: '0 0 0.75rem 0' }}>
+                    {cite.content.slice(0, 180)}...
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    {cite.tags.map((t) => (
+                      <span key={t} style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Ingestion Diagnostics if errors exist */}

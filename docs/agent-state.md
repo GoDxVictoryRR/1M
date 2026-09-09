@@ -1,12 +1,12 @@
 # TerraOps Agent State
 
 ## Project Status
-- **Current Status**: Active — Phase 4 (Recommendations Engine) Completed Successfully
+- **Current Status**: Active — Phase 5 (Local RAG Knowledge & Retrieval Engine) Completed Successfully
 - **Target Goal**: Build TerraOps sustainability decision-support product (SDG 13 Climate Action) adhering to zero-cost, local-first architecture.
 
 ## Current Phase
-- **Phase 4 — Recommendations** (Completed)
-- **Next Phase**: Phase 5 — RAG (Local Knowledge Base, Document Parser/Chunker, Local Embeddings, and Source-Aware Vector Retrieval)
+- **Phase 5 — RAG** (Completed)
+- **Next Phase**: Phase 6 — Agent + Local LLM (Allowlisted Tool Execution, Ollama Provider Adapter, and Strict No-LLM Fallback)
 
 ## Completed Work
 - **Phase 0 — Inspect & Environment Assessment**:
@@ -29,18 +29,19 @@
   - Built baseline time-series forecaster in `packages/domain/analytics/forecasting.py` with 95% confidence intervals and backtested error metrics.
   - Added API endpoints in `apps/api/routers/analytics.py`.
 - **Phase 4 — Recommendations**:
-  - Implemented deterministic rule templates:
-    1. Right-size underutilized compute instances (mean utilization < 50%, peak < 70%).
-    2. Off-peak scheduling / idle power-down (22:00–06:00 low utilization).
-    3. Remediate anomalous power spikes (severity critical/high).
-  - Transparent mathematical scoring:
-    `overall_score = (impact * 0.45) + (confidence * 25) + ((1 - effort) * 20) + (data_quality * 10)`
+  - Implemented deterministic rule templates for compute rightsizing, scheduling, and power remediation.
+  - Transparent mathematical scoring formula with auditable provenance.
   - Added API endpoints `GET /api/recommendations` and `GET /api/recommendations/{id}`.
-  - Updated frontend with Priority Interventions ranking, savings badges (kWh & kgCO2e), and provenance details.
-  - Verified 37 automated tests passing with zero LLM dependency.
+- **Phase 5 — RAG (Knowledge Base & Evidence Retrieval)**:
+  - Curated authoritative sustainability operational docs in `data/knowledge/` (Scope 2 guidance, rightsizing, off-peak scheduling, cooling & PUE efficiency).
+  - Built section-aware Markdown parser and chunker preserving metadata (publisher, publication date, source URLs, tags, section titles).
+  - Built offline, zero-cost vectorless hybrid TF-IDF + keyword/tag retriever (`packages/domain/rag/retriever.py`) with cosine similarity and stem-based query term coverage.
+  - Strict insufficient-evidence guardrail: triggers warning when similarity < threshold or query term coverage < 35%.
+  - Added API endpoints `GET /api/rag/search` and `GET /api/rag/documents`.
+  - Integrated RAG explorer UI into frontend dashboard.
+  - Verified 44 automated tests passing.
 
 ## Pending Work
-- **Phase 5 — RAG**: Local knowledge base, vector index, and evidence retrieval.
 - **Phase 6 — Agent + Local LLM**: Allowlisted tool execution, Ollama adapter, no-LLM fallback.
 - **Phase 7 — UI**: Incremental dashboard integration.
 - **Phase 8 — Evaluation**: Benchmark dataset and verification metrics.
@@ -48,27 +49,18 @@
 - **Phase 10 — Demo Packaging**: Documentation, demo dataset, and one-command local startup.
 
 ## Decisions Made
-1. **Zero-LLM Recommendation Gate**: All recommendation ranking, impact calculations, and effort estimations are 100% deterministic code. LLMs will later be used only to explain recommendations in conversational Q&A.
-2. **Score Transparency**: Each intervention displays its impact, confidence, effort level, and mathematical formula provenance so users understand why interventions are prioritized.
-
-## Assumptions
-- Telemetry intervals are periodic.
-- Energy values in kWh are non-negative.
-
-## Known Issues
-- None. 37 automated tests passing. Frontend build passes in 1s.
+1. **Zero-LLM Recommendation Gate**: All recommendation ranking, impact calculations, and effort estimations are 100% deterministic code.
+2. **Hybrid Offline Retrieval**: TF-IDF + query term stem coverage eliminates remote API/model weights while maintaining 100% test reproducibility and zero cost.
+3. **Strict Insufficient Evidence Guardrail**: Off-topic queries are flagged explicitly to prevent hallucinations before reaching any generation step.
 
 ## Commands Used
-- `uv run --extra dev pytest -v` (37 passed in 3.91s)
+- `uv run --extra dev pytest -v` (44 passed in 4.10s)
 - `cd apps/web && npm run build` (Passed cleanly, 0 errors)
-- `git commit -m "..." && git push origin main` (Phase 3 committed and pushed)
+- `git commit -m "..." && git push origin main`
 
 ## Test Status
-- Automated tests: 37 passed, 0 failed.
+- Automated tests: 44 passed, 0 failed.
 - Frontend build: Passed cleanly.
 
-## Human Actions Required
-- None.
-
 ## Next Action
-- Commit Phase 4 to GitHub and proceed to Phase 5 (Knowledge Base & Local RAG Retrieval).
+- Push Phase 5 commit to GitHub, then proceed to Phase 6 (Agent + Local LLM).
