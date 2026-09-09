@@ -30,8 +30,11 @@ async def upload_csv(request: Request):
         if not uploaded_file or not hasattr(uploaded_file, "read"):
             raise HTTPException(status_code=400, detail="Missing 'file' field in multipart form data")
         filename = getattr(uploaded_file, "filename", "")
-        if filename and not filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail="Only .csv files are supported")
+        if filename:
+            if "/" in filename or "\\" in filename or ".." in filename:
+                raise HTTPException(status_code=400, detail="Invalid characters in filename: path traversal sequences detected")
+            if not filename.lower().endswith(".csv"):
+                raise HTTPException(status_code=400, detail="Only .csv files are supported")
         byte_data = await uploaded_file.read()
         if len(byte_data) > MAX_UPLOAD_BYTES:
             raise HTTPException(status_code=413, detail="File exceeds maximum allowed size (10 MB)")

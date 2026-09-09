@@ -1,12 +1,13 @@
 # TerraOps Agent State
 
 ## Project Status
-- **Current Status**: Active — Phase 8 (Empirical Benchmark & Evaluation) Completed Successfully
-- **Target Goal**: Build TerraOps sustainability decision-support product (SDG 13 Climate Action) adhering to zero-cost, local-first architecture.
+- **Current Status**: Active — Phase 9 (Hardening & Security) & Phase 10 (Demo Packaging) Completed Successfully
+- **Target Goal**: Production-ready open-source sustainability decision-support product (SDG 13 Climate Action) adhering to zero-cost, local-first architecture.
 
 ## Current Phase
-- **Phase 8 — Evaluation** (Completed)
-- **Next Phase**: Phase 9 — Hardening (Security Audit, Docker Verification, and Clean Startup)
+- **Phase 9 — Hardening** (Completed)
+- **Phase 10 — Demo Packaging** (Completed)
+- **All Phase Gates (0 through 10) PASSED**
 
 ## Completed Work
 - **Phase 0 — Inspect & Environment Assessment**:
@@ -55,24 +56,37 @@
   - Authored evaluation report in `docs/evaluation-report.md`.
   - Added API endpoints `GET /api/evaluation/run` and `GET /api/evaluation/latest`.
   - Verified 75 automated unit and integration tests passing.
+- **Phase 9 — Hardening & Security**:
+  - Implemented 10MB upload payload limit and `.csv` extension enforcement.
+  - Added path traversal prevention on uploaded filenames.
+  - Created `tests/unit/test_security.py` verifying path traversal rejection, non-CSV rejection, upload limits, read-only tool sandboxing, and automated repository secret scanning.
+  - Modernized `docker-compose.yml` and verified compose syntax.
+  - Ran dependency audit: 42 Python dependencies verified compatible via `uv pip check`.
+  - Total automated tests increased to 82 passing.
+- **Phase 10 — Demo Packaging & Verification**:
+  - Created comprehensive, production-grade `README.md` with architecture diagrams, one-command Docker Compose startup, local bare-metal commands, benchmark summary, and 7-step demo walkthrough.
+  - Verified `.env.example` with safe zero-secret defaults.
+  - Verified demo dataset `data/sample/sample_telemetry.csv` and knowledge source documents.
+  - Confirmed 100% zero-cost compliance: ₹0 spent, zero paid cloud APIs, zero external subscriptions.
 
 ## Pending Work
-- **Phase 9 — Hardening**: Security audit and comprehensive test suite pass.
-- **Phase 10 — Demo Packaging**: Documentation, demo dataset, and one-command local startup.
+- None. All specification phases (0 through 10) are complete and verified.
 
 ## Decisions Made
 1. **Zero-LLM Recommendation & Calculation Gate**: All calculations, impacts, anomaly scores, and rankings remain 100% deterministic code.
 2. **Empirical Evaluation Requirement**: Benchmark metrics are calculated exclusively from executed tests and ground truth fixtures; no invented numbers.
 3. **Safe Read-Only Sandbox**: Assistant tools cannot mutate infrastructure; unknown tools and unauthorized arguments are strictly rejected.
+4. **Zero-Cost Local Architecture**: All models run locally via Ollama with automatic deterministic fallback.
 
 ## Commands Used
-- `uv run --extra dev pytest -v` (75 passed in 20.21s)
-- `cd apps/web && npm run build` (Passed cleanly in 1.00s, 0 errors)
+- `uv run --extra dev pytest -v` (82 passed in 20.86s)
+- `cd apps/web && npm run build` (Passed cleanly in 683ms, 0 errors)
+- `docker compose config` (Valid, modern Compose spec)
 - `git commit -m "..." && git push origin main`
 
 ## Test Status
-- Automated tests: 75 passed, 0 failed.
+- Automated tests: 82 passed, 0 failed.
 - Frontend build: Passed cleanly.
 
 ## Next Action
-- Commit Phase 8 to GitHub and proceed to Phase 9 (Hardening & Security Audit).
+- Commit and push final deliverables to GitHub.
