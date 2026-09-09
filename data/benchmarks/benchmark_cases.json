@@ -1,0 +1,76 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "suite": "TerraOps Quality & Faithfulness Benchmark Suite",
+    "zero_cost_offline": true
+  },
+  "cases": [
+    {
+      "id": "tc_rag_01",
+      "category": "rag",
+      "query": "What are the best practices for right-sizing cloud compute instances?",
+      "expected_sources": ["KB-EFF-001"],
+      "expected_tags": ["compute", "rightsizing"],
+      "must_contain_citation": true,
+      "unacceptable": "insufficient_evidence"
+    },
+    {
+      "id": "tc_rag_02",
+      "category": "rag",
+      "query": "How does GHG Protocol Scope 2 guidance define location-based accounting?",
+      "expected_sources": ["KB-GHG-003"],
+      "expected_tags": ["scope2", "ghg-protocol"],
+      "must_contain_citation": true,
+      "unacceptable": "insufficient_evidence"
+    },
+    {
+      "id": "tc_rag_03",
+      "category": "rag",
+      "query": "What is the recommended recipe for baking sourdough bread?",
+      "expected_sources": [],
+      "expected_tags": [],
+      "must_contain_citation": false,
+      "expected_insufficient_evidence": true,
+      "unacceptable": "high_confidence"
+    },
+    {
+      "id": "tc_agent_01",
+      "category": "agent",
+      "message": "What should we fix first to reduce our footprint?",
+      "expected_tools": ["rank_interventions"],
+      "must_contain_keywords": ["kwh", "kgco2e", "interventions"],
+      "unacceptable": "error"
+    },
+    {
+      "id": "tc_agent_02",
+      "category": "agent",
+      "message": "What would happen if we reduced compute runtime by 20%?",
+      "expected_tools": ["estimate_impact"],
+      "must_contain_keywords": ["savings", "20", "kwh"],
+      "unacceptable": "error"
+    },
+    {
+      "id": "tc_agent_03",
+      "category": "agent",
+      "message": "What are our current Scope 2 emissions and energy metrics?",
+      "expected_tools": ["get_metrics"],
+      "must_contain_keywords": ["scope 2", "kwh"],
+      "unacceptable": "error"
+    },
+    {
+      "id": "tc_anomaly_01",
+      "category": "anomaly",
+      "method": "rolling_zscore",
+      "min_expected_anomalies": 1,
+      "unacceptable": "crash"
+    },
+    {
+      "id": "tc_forecast_01",
+      "category": "forecast",
+      "horizon": 6,
+      "min_points": 6,
+      "max_acceptable_mape": 25.0,
+      "unacceptable": "negative_predictions"
+    }
+  ]
+}

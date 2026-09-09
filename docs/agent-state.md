@@ -1,12 +1,12 @@
 # TerraOps Agent State
 
 ## Project Status
-- **Current Status**: Active — Phase 7 (UI Dashboard Integration & Export) Completed Successfully
+- **Current Status**: Active — Phase 8 (Empirical Benchmark & Evaluation) Completed Successfully
 - **Target Goal**: Build TerraOps sustainability decision-support product (SDG 13 Climate Action) adhering to zero-cost, local-first architecture.
 
 ## Current Phase
-- **Phase 7 — UI** (Completed)
-- **Next Phase**: Phase 8 — Evaluation (Fixed Benchmark Dataset, Metric Measurement, and Verification Artifacts)
+- **Phase 8 — Evaluation** (Completed)
+- **Next Phase**: Phase 9 — Hardening (Security Audit, Docker Verification, and Clean Startup)
 
 ## Completed Work
 - **Phase 0 — Inspect & Environment Assessment**:
@@ -45,30 +45,34 @@
   - Implemented conversational assistant engine (`packages/domain/agent/assistant.py`) with intent-based tool dispatch, prompt-injection defense, and citation grounding.
   - Created API endpoints `GET /api/agent/tools`, `POST /api/agent/tool/{tool_name}`, `POST /api/agent/chat`, and `GET /api/agent/provider/health`.
   - Integrated interactive conversational assistant panel and tool inspection into frontend dashboard.
-  - Verified 72 automated unit and integration tests passing.
 - **Phase 7 — UI (Incremental Complete Dashboard Integration)**:
   - Integrated all 8 views into cohesive tabbed navigation: Overview, KPIs & Trends, Anomalies & Forecast, Recommendations, RAG Knowledge & Citations, Decision Assistant, and Audit & Environment.
-  - Implemented PDF/HTML-friendly Report Export (`window.print` with print-specific stylesheet hiding interactive buttons/inputs and rendering an auditable document).
+  - Implemented PDF/HTML-friendly Report Export (`window.print` with print-specific stylesheet).
   - Validated clean TypeScript build.
+- **Phase 8 — Evaluation (Empirical Benchmark Suite & Quality Metrics)**:
+  - Created versioned test suite `data/benchmarks/benchmark_cases.json`.
+  - Built `packages/domain/evaluation/evaluator.py` measuring ingestion accuracy (100%), retrieval hit@3 (100%), citation presence (100%), refusal/guardrail correctness (100%), tool dispatch faithfulness (100%), forecasting MAPE (10.0%), and latency (p50: 0.78ms, p95: 1.40ms).
+  - Authored evaluation report in `docs/evaluation-report.md`.
+  - Added API endpoints `GET /api/evaluation/run` and `GET /api/evaluation/latest`.
+  - Verified 75 automated unit and integration tests passing.
 
 ## Pending Work
-- **Phase 8 — Evaluation**: Benchmark dataset and verification metrics.
 - **Phase 9 — Hardening**: Security audit and comprehensive test suite pass.
 - **Phase 10 — Demo Packaging**: Documentation, demo dataset, and one-command local startup.
 
 ## Decisions Made
 1. **Zero-LLM Recommendation & Calculation Gate**: All calculations, impacts, anomaly scores, and rankings remain 100% deterministic code.
-2. **Safe Read-Only Sandbox**: Assistant tools cannot mutate infrastructure or run arbitrary commands; unknown tools and unauthorized arguments are strictly rejected with 400 Bad Request.
-3. **Graceful Degradation**: Offline / No-LLM fallback mode works 100% reliably when Ollama is offline.
+2. **Empirical Evaluation Requirement**: Benchmark metrics are calculated exclusively from executed tests and ground truth fixtures; no invented numbers.
+3. **Safe Read-Only Sandbox**: Assistant tools cannot mutate infrastructure; unknown tools and unauthorized arguments are strictly rejected.
 
 ## Commands Used
-- `uv run --extra dev pytest -v` (72 passed in 22s)
-- `cd apps/web && npm run build` (Passed cleanly in 953ms, 0 errors)
+- `uv run --extra dev pytest -v` (75 passed in 20.21s)
+- `cd apps/web && npm run build` (Passed cleanly in 1.00s, 0 errors)
 - `git commit -m "..." && git push origin main`
 
 ## Test Status
-- Automated tests: 72 passed, 0 failed.
+- Automated tests: 75 passed, 0 failed.
 - Frontend build: Passed cleanly.
 
 ## Next Action
-- Commit Phase 6 to GitHub and proceed to Phase 7 (UI Dashboard Integration).
+- Commit Phase 8 to GitHub and proceed to Phase 9 (Hardening & Security Audit).
