@@ -34,8 +34,9 @@ dist/
 build/
 *.log
 
-# OS / editor
+# OS / editor / agents
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+.agents/
