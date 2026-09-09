@@ -40,6 +40,7 @@ export const App: React.FC = () => {
   const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
   const [chatLoading, setChatLoading] = useState<boolean>(false);
   const [agentTools, setAgentTools] = useState<AgentTool[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'kpis' | 'anomalies' | 'recommendations' | 'rag' | 'assistant' | 'audit'>('all');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -188,6 +189,15 @@ export const App: React.FC = () => {
           <button className="btn btn-secondary" onClick={refreshAll}>
             Refresh
           </button>
+
+          <button
+            className="btn btn-secondary"
+            onClick={() => window.print()}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-light)' }}
+            title="Export printable audit report conforming to GHG Protocol Scope 2"
+          >
+            <span>📄</span> Export Audit Report
+          </button>
         </div>
 
         {successMsg && (
@@ -203,10 +213,37 @@ export const App: React.FC = () => {
         )}
       </section>
 
+      {/* Navigation Tabs */}
+      <div className="nav-tabs">
+        <button className={`nav-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
+          All Overview
+        </button>
+        <button className={`nav-tab ${activeTab === 'kpis' ? 'active' : ''}`} onClick={() => setActiveTab('kpis')}>
+          KPIs & Trends
+        </button>
+        <button className={`nav-tab ${activeTab === 'anomalies' ? 'active' : ''}`} onClick={() => setActiveTab('anomalies')}>
+          Anomalies & Forecast
+        </button>
+        <button className={`nav-tab ${activeTab === 'recommendations' ? 'active' : ''}`} onClick={() => setActiveTab('recommendations')}>
+          Interventions
+        </button>
+        <button className={`nav-tab ${activeTab === 'rag' ? 'active' : ''}`} onClick={() => setActiveTab('rag')}>
+          Knowledge & Citations
+        </button>
+        <button className={`nav-tab ${activeTab === 'assistant' ? 'active' : ''}`} onClick={() => setActiveTab('assistant')}>
+          Decision Assistant
+        </button>
+        <button className={`nav-tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>
+          Audit & Environment
+        </button>
+      </div>
+
       {/* Operational KPI Grid */}
-      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: '#fff' }}>
-        Deterministic Operational Metrics ({metrics?.records_count || 0} Records Analyzed)
-      </h3>
+      {(activeTab === 'all' || activeTab === 'kpis') && (
+        <>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: '#fff' }}>
+            Deterministic Operational Metrics ({metrics?.records_count || 0} Records Analyzed)
+          </h3>
 
       <div className="status-grid">
         <div className="card">
@@ -261,8 +298,11 @@ export const App: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Prioritized Recommendations Section */}
+      {(activeTab === 'all' || activeTab === 'recommendations') && (
       <section className="details-section" style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
@@ -335,8 +375,11 @@ export const App: React.FC = () => {
           </p>
         )}
       </section>
+      )}
 
       {/* Anomaly Detection Section */}
+      {(activeTab === 'all' || activeTab === 'anomalies') && (
+      <>
       <section className="details-section" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
@@ -458,9 +501,11 @@ export const App: React.FC = () => {
           </div>
         )}
       </section>
+      </>
+      )}
 
       {/* Period-over-Period Trend */}
-      {metrics?.period_comparison && (
+      {(activeTab === 'all' || activeTab === 'kpis') && metrics?.period_comparison && (
         <section className="details-section" style={{ marginBottom: '2rem' }}>
           <h3 className="details-title">
             <span>Period-over-Period Operational Comparison</span>
@@ -494,6 +539,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Provenance & Factor Traceability */}
+      {(activeTab === 'all' || activeTab === 'audit') && (
       <section className="details-section" style={{ marginBottom: '2rem' }}>
         <h3 className="details-title">
           <span>Carbon Intensity Factors Applied & Provenance</span>
@@ -527,8 +573,10 @@ export const App: React.FC = () => {
           </tbody>
         </table>
       </section>
+      )}
 
       {/* Phase 5: Semantic Knowledge & Evidence Retrieval (RAG) */}
+      {(activeTab === 'all' || activeTab === 'rag') && (
       <section className="details-section" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
@@ -625,8 +673,10 @@ export const App: React.FC = () => {
           </div>
         )}
       </section>
+      )}
 
       {/* Phase 6: Operational Sustainability Decision Assistant */}
+      {(activeTab === 'all' || activeTab === 'assistant') && (
       <section className="details-section" style={{ marginBottom: '2rem', border: '1px solid var(--accent-cyan)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
@@ -789,8 +839,11 @@ export const App: React.FC = () => {
           </div>
         )}
       </section>
+      )}
 
-      {/* Ingestion Diagnostics if errors exist */}
+      {/* Ingestion Diagnostics & Environment */}
+      {(activeTab === 'all' || activeTab === 'audit') && (
+      <>
       {ingestionResult && ingestionResult.errors.length > 0 && (
         <section className="details-section" style={{ marginBottom: '2rem', borderColor: 'var(--accent-amber)' }}>
           <h3 className="details-title" style={{ color: 'var(--accent-amber)' }}>
@@ -841,11 +894,13 @@ export const App: React.FC = () => {
             </tr>
             <tr>
               <td>Current Project Gate</td>
-              <td>Phase 4: Recommendations Engine Complete</td>
+              <td>Phase 7: UI Dashboard Integration Complete</td>
             </tr>
           </tbody>
         </table>
       </section>
+      </>
+      )}
 
       {/* Footer */}
       <footer className="app-footer">
