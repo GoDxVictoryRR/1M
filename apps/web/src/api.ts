@@ -249,3 +249,61 @@ export async function fetchRagDocuments(): Promise<RagDocumentInfo[]> {
   if (!res.ok) throw new Error(`Failed to fetch documents: HTTP ${res.status}`);
   return res.json();
 }
+
+export interface AgentTool {
+  name: string;
+  description: string;
+  parameters: Record<string, any>;
+  read_only: boolean;
+}
+
+export interface ToolCallRecord {
+  tool_name: string;
+  arguments: Record<string, any>;
+  output: Record<string, any>;
+  execution_time_ms: number;
+  success: boolean;
+  error_message?: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  tools_used: ToolCallRecord[];
+  citations: Array<{
+    chunk_id?: string;
+    title: string;
+    publisher?: string;
+    section_title?: string;
+    content: string;
+    similarity_score?: number;
+  }>;
+  model_used: string;
+  fallback_mode: boolean;
+  assumptions: string[];
+}
+
+export async function chatWithAssistant(message: string): Promise<ChatResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/agent/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+    throw new Error(err.detail || 'Assistant request failed');
+  }
+  return res.json();
+}
+
+export async function fetchAgentTools(): Promise<AgentTool[]> {
+  const res = await fetch(`${API_BASE_URL}/api/agent/tools`);
+  if (!res.ok) throw new Error(`Failed to fetch agent tools: HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchProviderHealth(): Promise<{ provider: string; model: string; status: string; details?: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/agent/provider/health`);
+  if (!res.ok) throw new Error(`Failed to fetch provider health: HTTP ${res.status}`);
+  return res.json();
+}
+

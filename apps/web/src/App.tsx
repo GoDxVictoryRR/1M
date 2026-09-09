@@ -8,13 +8,17 @@ import {
   fetchForecast,
   fetchRecommendations,
   searchRagKnowledge,
+  chatWithAssistant,
+  fetchAgentTools,
   HealthResponse,
   MetricsSummary,
   IngestionResult,
   AnomalyReport,
   ForecastReport,
   RecommendationReport,
-  RagSearchResponse
+  RagSearchResponse,
+  ChatResponse,
+  AgentTool
 } from './api';
 
 export const App: React.FC = () => {
@@ -32,6 +36,10 @@ export const App: React.FC = () => {
   const [ragQuery, setRagQuery] = useState<string>('right-sizing compute instances');
   const [ragResult, setRagResult] = useState<RagSearchResponse | null>(null);
   const [ragLoading, setRagLoading] = useState<boolean>(false);
+  const [chatInput, setChatInput] = useState<string>('What should we fix first to reduce our footprint?');
+  const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
+  const [chatLoading, setChatLoading] = useState<boolean>(false);
+  const [agentTools, setAgentTools] = useState<AgentTool[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,12 +62,14 @@ export const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, mData] = await Promise.all([
+      const [hData, mData, toolsData] = await Promise.all([
         fetchHealth(),
-        fetchMetricsSummary().catch(() => null)
+        fetchMetricsSummary().catch(() => null),
+        fetchAgentTools().catch(() => [])
       ]);
       setHealth(hData);
       setMetrics(mData);
+      setAgentTools(toolsData || []);
       await refreshAnalyticsAndRecs();
     } catch (err: any) {
       setError(err.message || 'Error connecting to TerraOps API backend');
@@ -612,6 +622,170 @@ export const App: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* Phase 6: Operational Sustainability Decision Assistant */}
+      <section className="details-section" style={{ marginBottom: '2rem', border: '1px solid var(--accent-cyan)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h3 className="details-title" style={{ margin: 0, color: 'var(--accent-cyan)' }}>
+              <span>TerraOps Conversational Assistant & Tool Sandbox</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+              Autonomous decision-support agent bound to 6 strictly read-only allowlisted tools with graceful offline No-LLM fallback.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(6, 182, 212, 0.15)', color: 'var(--accent-cyan)', border: '1px solid rgba(6, 182, 212, 0.3)' }}>
+              Read-Only Sandbox ({agentTools.length || 6} Tools)
+            </span>
+          </div>
+        </div>
+
+        {/* Allowlisted Tools List */}
+        {agentTools.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Allowlisted Tools:</span>
+            {agentTools.map((t) => (
+              <span
+                key={t.name}
+                title={t.description}
+                style={{
+                  fontSize: '0.7rem',
+                  fontFamily: 'var(--font-mono)',
+                  padding: '0.15rem 0.4rem',
+                  borderRadius: '3px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                🔒 {t.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Quick Question Buttons */}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          {[
+            'What should we fix first to reduce our footprint?',
+            'What would happen if we reduced compute runtime by 15%?',
+            'What does GHG Protocol Scope 2 guidance say?',
+            'Did we detect any unusual power consumption spikes?'
+          ].map((promptText, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setChatInput(promptText)}
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '4px',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}
+            >
+              💡 {promptText}
+            </button>
+          ))}
+        </div>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!chatInput.trim()) return;
+            setChatLoading(true);
+            try {
+              const res = await chatWithAssistant(chatInput.trim());
+              setChatResponse(res);
+            } catch (err: any) {
+              setError(err.message || 'Assistant request failed');
+            } finally {
+              setChatLoading(false);
+            }
+          }}
+          style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}
+        >
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="Ask the sustainability assistant (e.g. what to fix first, simulate 10% reduction, check anomalies)..."
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem'
+            }}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={chatLoading}
+            style={{ minWidth: '130px' }}
+          >
+            {chatLoading ? 'Analyzing...' : 'Ask Assistant'}
+          </button>
+        </form>
+
+        {chatResponse && (
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '1.25rem', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--accent-cyan)' }}>Assistant Response</span>
+                <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: chatResponse.fallback_mode ? 'rgba(245, 158, 11, 0.15)' : 'rgba(52, 211, 153, 0.15)', color: chatResponse.fallback_mode ? 'var(--accent-amber)' : 'var(--accent-emerald)' }}>
+                  {chatResponse.fallback_mode ? 'Deterministic Fallback Mode' : `Model: ${chatResponse.model_used}`}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                {chatResponse.tools_used.length} tool(s) executed
+              </span>
+            </div>
+
+            {/* Tools Executed Trace */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              {chatResponse.tools_used.map((t, i) => (
+                <span key={i} style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)' }}>
+                  ⚡ {t.tool_name} ({t.execution_time_ms}ms)
+                </span>
+              ))}
+            </div>
+
+            {/* Formatted Answer */}
+            <div style={{ fontSize: '0.9rem', lineHeight: 1.6, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>
+              {chatResponse.answer}
+            </div>
+
+            {/* Citations if any */}
+            {chatResponse.citations.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
+                <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--accent-emerald)' }}>
+                  Authoritative Citations Grounding Response:
+                </h5>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  {chatResponse.citations.map((c, i) => (
+                    <li key={i} style={{ marginBottom: '0.25rem' }}>
+                      <strong>{c.title}</strong> {c.publisher ? `(${c.publisher})` : ''}: {c.content.slice(0, 140)}...
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Assumptions */}
+            {chatResponse.assumptions.length > 0 && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                Assumptions: {chatResponse.assumptions.join(' ')}
+              </div>
+            )}
           </div>
         )}
       </section>

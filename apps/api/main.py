@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apps.api.config import settings
-from apps.api.routers import health, data, metrics, analytics, recommendations, rag
+from apps.api.routers import health, data, metrics, analytics, recommendations, rag, agent
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -25,6 +25,7 @@ app.include_router(metrics.router)
 app.include_router(analytics.router)
 app.include_router(recommendations.router)
 app.include_router(rag.router)
+app.include_router(agent.router)
 
 
 
