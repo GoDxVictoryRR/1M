@@ -33,7 +33,7 @@ data/terraops.db
 dist/
 build/
 *.log
-
+skills-lock.json/
 # OS / editor / agents
 .DS_Store
 Thumbs.db
