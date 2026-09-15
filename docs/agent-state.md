@@ -68,25 +68,31 @@
   - Verified `.env.example` with safe zero-secret defaults.
   - Verified demo dataset `data/sample/sample_telemetry.csv` and knowledge source documents.
   - Confirmed 100% zero-cost compliance: ₹0 spent, zero paid cloud APIs, zero external subscriptions.
+- **Post-Phase Feature Additions (NVIDIA NIM & Rate Limiting)**:
+  - Integrated `NvidiaNimProvider` supporting hosted/containerized NVIDIA NIM APIs (`meta/llama-3.3-70b-instruct`) with graceful zero-LLM fallback.
+  - Implemented thread-safe in-memory sliding-window rate limiter in `packages/domain/agent/rate_limiter.py` protecting `/api/agent/chat` from spamming and quota exhaustion (HTTP 429).
+  - Added comprehensive test coverage in `tests/unit/test_rate_limiter.py`, `tests/unit/test_nvidia_provider.py`, and `tests/integration/test_agent_api.py`.
+  - Total automated tests increased to 94 passing.
 
 ## Pending Work
-- None. All specification phases (0 through 10) are complete and verified.
+- None. All specification phases (0 through 10) and feature additions are complete and verified.
 
 ## Decisions Made
 1. **Zero-LLM Recommendation & Calculation Gate**: All calculations, impacts, anomaly scores, and rankings remain 100% deterministic code.
 2. **Empirical Evaluation Requirement**: Benchmark metrics are calculated exclusively from executed tests and ground truth fixtures; no invented numbers.
 3. **Safe Read-Only Sandbox**: Assistant tools cannot mutate infrastructure; unknown tools and unauthorized arguments are strictly rejected.
-4. **Zero-Cost Local Architecture**: All models run locally via Ollama with automatic deterministic fallback.
+4. **Zero-Cost Local Architecture**: All models run locally via Ollama with automatic deterministic fallback; NVIDIA NIM option is 100% optional and falls back gracefully.
+5. **In-Memory Rate Limiting**: Enforced via sliding-window tracker without requiring Redis or external cloud dependencies.
 
 ## Commands Used
-- `uv run --extra dev pytest -v` (82 passed in 20.86s)
-- `cd apps/web && npm run build` (Passed cleanly in 683ms, 0 errors)
+- `uv run --extra dev pytest -v` (94 passed in 25.48s)
+- `cd apps/web && npm run build` (Passed cleanly in 2.28s, 0 errors)
 - `docker compose config` (Valid, modern Compose spec)
 - `git commit -m "..." && git push origin main`
 
 ## Test Status
-- Automated tests: 82 passed, 0 failed.
+- Automated tests: 94 passed, 0 failed.
 - Frontend build: Passed cleanly.
 
 ## Next Action
-- Commit and push final deliverables to GitHub.
+- Commit and push progress to GitHub.

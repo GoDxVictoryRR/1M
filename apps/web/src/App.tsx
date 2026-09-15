@@ -691,6 +691,14 @@ export const App: React.FC = () => {
             <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(6, 182, 212, 0.15)', color: 'var(--accent-cyan)', border: '1px solid rgba(6, 182, 212, 0.3)' }}>
               Read-Only Sandbox ({agentTools.length || 6} Tools)
             </span>
+            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-green)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              AI: {health?.components.ai_inference.provider === 'nvidia_nim' ? 'NVIDIA NIM' : (health?.components.ai_inference.provider === 'ollama' ? 'Ollama' : 'Deterministic')}
+            </span>
+            {health?.components.rate_limiting?.enabled && (
+              <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: 'var(--accent-amber)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                Rate Limit: {health.components.rate_limiting.limit_per_minute}/min
+              </span>
+            )}
           </div>
         </div>
 
@@ -889,12 +897,16 @@ export const App: React.FC = () => {
               <td>{health?.components.database.type.toUpperCase() || 'SQLITE'} ({health?.components.database.path || 'data/terraops.db'})</td>
             </tr>
             <tr>
-              <td>Local AI Provider</td>
-              <td>Ollama ({health?.components.ai_inference.model || 'qwen3.5:4b'} - {health?.components.ai_inference.status || 'Active'})</td>
+              <td>Active AI Provider</td>
+              <td>{health?.components.ai_inference.provider.toUpperCase() || 'OLLAMA'} ({health?.components.ai_inference.model} — {health?.components.ai_inference.status})</td>
+            </tr>
+            <tr>
+              <td>API Rate Limiting</td>
+              <td>{health?.components.rate_limiting?.enabled ? `Active (Max ${health.components.rate_limiting.limit_per_minute} req/min per IP)` : 'Disabled'}</td>
             </tr>
             <tr>
               <td>Current Project Gate</td>
-              <td>Phase 7: UI Dashboard Integration Complete</td>
+              <td>Production Ready (NVIDIA NIM + Local Ollama + Rate Limiting)</td>
             </tr>
           </tbody>
         </table>

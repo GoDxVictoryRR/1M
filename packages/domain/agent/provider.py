@@ -229,3 +229,148 @@ class NoLLMProvider(LLMProvider):
             provider="no-llm-fallback",
             fallback_used=True,
         )
+
+
+class NvidiaNimProvider(LLMProvider):
+    """NVIDIA NIM (Inference Microservice) API adapter.
+
+    Provides hosted or containerized LLM inference using standard OpenAI-compatible
+    chat completions endpoint with strict error handling, context budgeting, and fallback.
+    """
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+        timeout_seconds: float = 15.0,
+    ):
+        self.api_key = api_key if api_key is not None else os.getenv("NVIDIA_API_KEY", "")
+        self.base_url = (base_url or os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")).rstrip("/")
+        self.model = model or os.getenv("NVIDIA_MODEL", "meta/llama-3.3-70b-instruct")
+        self.timeout = timeout_seconds
+
+    async def health_check(self) -> ProviderHealth:
+        if not self.api_key:
+            return ProviderHealth(
+                provider="nvidia_nim",
+                model=self.model,
+                status="offline",
+                details="NVIDIA_API_KEY is not configured.",
+            )
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Accept": "application/json",
+            }
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                res = await client.get(f"{self.base_url}/models", headers=headers)
+                if res.status_code == 200:
+                    return ProviderHealth(
+                        provider="nvidia_nim",
+                        model=self.model,
+                        status="healthy",
+                        details="Connected to NVIDIA NIM API.",
+                    )
+                elif res.status_code in (401, 403):
+                    return ProviderHealth(
+                        provider="nvidia_nim",
+                        model=self.model,
+                        status="unauthorized",
+                        details=f"Authentication failed: HTTP {res.status_code}",
+                    )
+                return ProviderHealth(
+                    provider="nvidia_nim",
+                    model=self.model,
+                    status="degraded",
+                    details=f"HTTP {res.status_code}",
+                )
+        except Exception as exc:
+            return ProviderHealth(
+                provider="nvidia_nim",
+                model=self.model,
+                status="offline",
+                details=f"Cannot reach NVIDIA NIM endpoint ({exc})",
+            )
+
+    async def generate(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        context_data: Optional[Dict[str, Any]] = None,
+        max_tokens: int = 512,
+        temperature: float = 0.2,
+    ) -> ProviderResponse:
+        capped_prompt = prompt[:3000]
+        full_system = system_prompt or "You are TerraOps sustainability assistant. Rely only on verified evidence."
+
+        if context_data:
+            capped_prompt += f"\n\nContext:\n{json.dumps(context_data, indent=2)[:2000]}"
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": full_system},
+                {"role": "user", "content": capped_prompt},
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": False,
+        }
+
+        try:
+            if not self.api_key:
+                raise ValueError("NVIDIA_API_KEY is not configured")
+
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                res = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    choices = data.get("choices", [])
+                    if choices:
+                        response_text = choices[0].get("message", {}).get("content", "").strip()
+                    else:
+                        response_text = ""
+                    tokens_used = data.get("usage", {}).get("total_tokens")
+                    return ProviderResponse(
+                        content=response_text,
+                        model=self.model,
+                        provider="nvidia_nim",
+                        fallback_used=False,
+                        tokens_used=tokens_used,
+                    )
+                else:
+                    raise RuntimeError(f"NVIDIA NIM API returned HTTP {res.status_code}: {res.text}")
+        except Exception:
+            # Fall back gracefully to NoLLMProvider
+            fallback = NoLLMProvider()
+            res = await fallback.generate(prompt=prompt, system_prompt=system_prompt, context_data=context_data)
+            res.fallback_used = True
+            return res
+
+
+def create_default_provider() -> LLMProvider:
+    """Factory creating the appropriate LLMProvider based on environment configuration."""
+    provider_type = os.getenv("LLM_PROVIDER", "auto").lower()
+    nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip()
+
+    if provider_type == "nvidia" or (provider_type == "auto" and nvidia_key):
+        return NvidiaNimProvider()
+    elif provider_type == "ollama":
+        return OllamaProvider()
+    elif provider_type == "none":
+        return NoLLMProvider()
+    else:
+        # Default auto when no nvidia key is set: try Ollama, with fallback to NoLLMProvider
+        return OllamaProvider()
+

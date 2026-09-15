@@ -20,18 +20,31 @@ async def health_check():
         except Exception as e:
             db_status = f"error: {str(e)}"
             
-    # Check Ollama connectivity if enabled
-    ollama_status = "disabled"
-    if settings.OLLAMA_ENABLED:
+    # Check AI provider connectivity
+    ai_provider = "ollama"
+    ai_model = settings.LLM_MODEL
+    ai_status = "offline / unreachable"
+
+    provider_pref = settings.LLM_PROVIDER.lower()
+    has_nvidia_key = bool(settings.NVIDIA_API_KEY and settings.NVIDIA_API_KEY.strip())
+
+    if provider_pref == "nvidia" or (provider_pref == "auto" and has_nvidia_key):
+        ai_provider = "nvidia_nim"
+        ai_model = settings.NVIDIA_MODEL
+        if has_nvidia_key:
+            ai_status = "configured (NVIDIA NIM API)"
+        else:
+            ai_status = "missing_api_key (NVIDIA_API_KEY not set)"
+    elif settings.OLLAMA_ENABLED:
         try:
             async with httpx.AsyncClient(timeout=1.5) as client:
                 resp = await client.get(f"{settings.OLLAMA_BASE_URL}/api/version")
                 if resp.status_code == 200:
-                    ollama_status = "reachable"
+                    ai_status = "reachable"
                 else:
-                    ollama_status = f"unreachable (status {resp.status_code})"
+                    ai_status = f"unreachable (status {resp.status_code})"
         except Exception:
-            ollama_status = "offline / unreachable"
+            ai_status = "offline / unreachable"
 
     return {
         "status": "healthy",
@@ -46,10 +59,15 @@ async def health_check():
                 "status": db_status
             },
             "ai_inference": {
-                "provider": "ollama",
-                "model": settings.LLM_MODEL,
-                "status": ollama_status,
+                "provider": ai_provider,
+                "model": ai_model,
+                "status": ai_status,
                 "fallback_mode": "deterministic_templates"
+            },
+            "rate_limiting": {
+                "enabled": settings.RATE_LIMIT_ENABLED,
+                "limit_per_minute": settings.RATE_LIMIT_REQUESTS_PER_MINUTE,
+                "type": "in_memory_sliding_window"
             }
         }
     }

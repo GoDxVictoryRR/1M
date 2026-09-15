@@ -12,10 +12,23 @@ class Settings(BaseSettings):
     
     DATABASE_PATH: str = "data/terraops.db"
     
+    # AI Provider Settings
+    LLM_PROVIDER: str = "auto"  # "auto", "nvidia", "ollama", "none"
+    
+    # Local Ollama Settings
     OLLAMA_ENABLED: bool = True
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     LLM_MODEL: str = "qwen3.5:4b"
     EMBEDDING_MODEL: str = "nomic-embed-text"
+    
+    # NVIDIA NIM API Settings (Optional)
+    NVIDIA_API_KEY: str = ""
+    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
+    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
+    
+    # In-Memory Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 15
 
     model_config = SettingsConfigDict(
         env_file=".env",

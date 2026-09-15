@@ -16,6 +16,11 @@ export interface HealthResponse {
       status: string;
       fallback_mode: string;
     };
+    rate_limiting?: {
+      enabled: boolean;
+      limit_per_minute: number;
+      type: string;
+    };
   };
 }
 

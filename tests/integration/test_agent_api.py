@@ -92,3 +92,37 @@ async def test_check_provider_health_api():
         assert "provider" in data
         assert "model" in data
         assert "status" in data
+
+
+@pytest.mark.asyncio
+async def test_chat_rate_limiting_enforcement():
+    from packages.domain.agent.rate_limiter import get_rate_limiter
+    limiter = get_rate_limiter()
+    limiter.reset()
+    original_max = limiter.max_requests
+    limiter.max_requests = 2  # Set limit to 2 for quick testing
+
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Request 1: allowed
+            r1 = await client.post("/api/agent/chat", json={"message": "What is our energy usage?"})
+            assert r1.status_code == 200
+            assert r1.headers.get("X-RateLimit-Remaining") == "1"
+
+            # Request 2: allowed
+            r2 = await client.post("/api/agent/chat", json={"message": "What is our carbon footprint?"})
+            assert r2.status_code == 200
+            assert r2.headers.get("X-RateLimit-Remaining") == "0"
+
+            # Request 3: blocked with 429
+            r3 = await client.post("/api/agent/chat", json={"message": "Spam query to exhaust limit"})
+            assert r3.status_code == 429
+            err_data = r3.json()
+            assert "Rate limit exceeded" in err_data["detail"]
+            assert "Retry-After" in r3.headers
+            assert int(r3.headers["Retry-After"]) > 0
+    finally:
+        limiter.max_requests = original_max
+        limiter.reset()
+

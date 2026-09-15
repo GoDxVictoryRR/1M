@@ -16,7 +16,8 @@ TerraOps is engineered to run **100% locally with zero billable cloud services a
 1. **Deterministic Foundations**: Carbon metrics (GHG Protocol Scope 2), anomaly detection, forecasting, and recommendation rankings are computed using deterministic algorithms and authoritative regional factor registries (EPA eGRID 2024, EEA 2024).
 2. **Offline Hybrid RAG**: Vectorless hybrid TF-IDF and keyword retrieval against authoritative environmental standards with strict insufficient-evidence guardrails.
 3. **Sandboxed Read-Only Agent**: Allows natural language queries and intervention simulation with zero destructive capabilities.
-4. **Resilient AI Ingestion**: Connects optionally to local [Ollama](https://ollama.ai) (`qwen3.5:4b`), automatically failing over to an offline deterministic template provider whenever Ollama is offline or unreachable.
+4. **Resilient AI Ingestion**: Connects to local [Ollama](https://ollama.ai) (`qwen3.5:4b`) or hosted **NVIDIA NIM API** (`meta/llama-3.3-70b-instruct`), automatically failing over to an offline deterministic template provider whenever external or local services are offline or unreachable.
+5. **In-Memory Rate Limiting**: Built-in sliding-window rate limiter protecting LLM endpoints from spamming and quota exhaustion without requiring external infrastructure (Redis/Cloud).
 
 ---
 
@@ -48,10 +49,12 @@ TerraOps is engineered to run **100% locally with zero billable cloud services a
 |  |               Read-Only Sandboxed Agent Layer                    |  |
 |  |  Tools: get_metrics, get_anomalies, get_forecast, rank_actions  |  |
 |  |  Offline RAG Retriever (Authoritative GHG & Efficiency Docs)      |  |
+|  |  In-Memory Sliding-Window Rate Limiter (Spam/Quota Guard)         |  |
 |  +--------------------------------+----------------------------------+  |
 |                                   |                                     |
 |                     +-------------v-------------+                       |
 |                     | AI Inference Provider     |                       |
+|                     | - NVIDIA NIM API (Option) |                       |
 |                     | - Ollama (Local LLM)      |                       |
 |                     | - Offline Fallback Engine |                       |
 |                     +---------------------------+                       |
@@ -73,6 +76,7 @@ TerraOps is engineered to run **100% locally with zero billable cloud services a
   - 10MB upload payload limits and `.csv` extension verification.
   - Path traversal protection on filenames.
   - Read-only agent sandbox preventing arbitrary execution or destructive commands.
+  - In-memory sliding-window rate limiting on LLM endpoints to prevent spamming and quota exhaustion.
   - Hardened CORS and zero plaintext secrets.
 - **Empirical Evaluation Suite**: Automated benchmark framework measuring ingestion accuracy, retrieval Hit@k, citation presence, and execution latency.
 
@@ -139,7 +143,7 @@ Dashboard is accessible at `http://localhost:5173`.
 TerraOps includes an extensive test suite covering ingestion validation, regional emission lookups, anomaly detectors, forecasters, rule recommendations, sandboxed agent tools, hybrid RAG, and security hardening:
 
 ```bash
-# Run all unit, integration, and security tests (82 tests)
+# Run all unit, integration, provider, and security tests (94 tests)
 uv run --extra dev pytest -v
 
 # Run frontend build & type check

@@ -11,6 +11,7 @@ from packages.domain.agent.provider import (
     NoLLMProvider,
     OllamaProvider,
     ProviderResponse,
+    create_default_provider,
 )
 from packages.domain.agent.schemas import (
     ChatMessage,
@@ -41,7 +42,7 @@ class AssistantEngine:
         provider: Optional[LLMProvider] = None,
     ):
         self.tools = tool_registry or get_tool_registry()
-        self.provider = provider or OllamaProvider()
+        self.provider = provider or create_default_provider()
         self.fallback_provider = NoLLMProvider()
 
     def select_tools_for_query(self, message: str) -> List[tuple[str, Dict[str, Any]]]:
