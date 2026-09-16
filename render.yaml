@@ -26,12 +26,12 @@ services:
   # -------------------------------------------------------------
   # Frontend Static Site (Vite + React 18 + Tailwind + Video CDN)
   # -------------------------------------------------------------
-  - type: static
+  - type: web
     name: terraops-web
+    runtime: static
     rootDir: apps/web
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    pullRequestPreviewsEnabled: false
+    staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
         fromService:
