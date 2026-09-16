@@ -1,0 +1,47 @@
+{
+  "id": "d8aa9155-6ecb-4f35-a4e7-7e3e72de1926",
+  "accountId": "personal",
+  "mediaType": "video",
+  "status": "completed",
+  "prompt": "Smooth continuous forward dolly camera movement moving steadily through a futuristic enterprise green compute data center, seamless forward motion through server racks with glowing bioluminescent emerald green and soft blue fiber-optic light pulses, glass floor with subtle reflections, volumetric atmospheric lighting, cinematic, photorealistic, perfectly steady rectilinear forward camera tracking, zero camera shake, zero vibration, smooth spatial progression.",
+  "outputs": 1,
+  "upscale": "none",
+  "outputDirectory": "c:\\Users\\hardi\\Downloads\\1M\\data",
+  "downloadRequested": true,
+  "createdAt": "2026-09-16T14:02:53.083Z",
+  "updatedAt": "2026-09-16T14:04:35.451Z",
+  "aspectRatio": "16:9",
+  "durationSeconds": 10,
+  "flowProjectUrl": "https://flow.google.com/project/fe6d003b-49c1-42eb-bd53-8f1b34d90d59",
+  "creditConfirmationMode": "auto_approve",
+  "baselineMediaCount": 2,
+  "baselineMediaKeys": [
+    "url:https://flow-content.google/video/01efea07-1d50-48f0-a37e-1931c839b7ed?Expires=1789587796&KeyName=labs-flow-prod-cdn-key&Signature=2EogPkfvuxSI55BnH-XdWhGfI6k",
+    "url-stable:https://flow-content.google/video/01efea07-1d50-48f0-a37e-1931c839b7ed?KeyName=labs-flow-prod-cdn-key",
+    "url:https://flow-content.google/video/6c3568e6-186f-4fd2-ba6e-c6d440d1496d?Expires=1789581756&KeyName=labs-flow-prod-cdn-key&Signature=xrWYSakEH049EVE3Oi6Fj0Ch6EA",
+    "url-stable:https://flow-content.google/video/6c3568e6-186f-4fd2-ba6e-c6d440d1496d?KeyName=labs-flow-prod-cdn-key"
+  ],
+  "generatedAssets": [
+    {
+      "keys": [
+        "url:https://flow-content.google/video/3e08a33d-b7e5-4301-84d5-4b588a3d457b?Expires=1789589025&KeyName=labs-flow-prod-cdn-key&Signature=P2ZUpkt4Frn66_8SZPBT0vBqBAE",
+        "url-stable:https://flow-content.google/video/3e08a33d-b7e5-4301-84d5-4b588a3d457b?KeyName=labs-flow-prod-cdn-key"
+      ]
+    }
+  ],
+  "downloadedFiles": [
+    "c:\\Users\\hardi\\Downloads\\1M\\data\\Smooth-continuous-forward-dolly-camera-movement-moving-stead-d8aa9155.mp4"
+  ],
+  "mediaProbe": [
+    {
+      "sizeBytes": 6876553,
+      "sha256": "e112c8fbd1848b323dc2730a6284a5fc85966b748954e2719694eabb5987b62e",
+      "ffprobeAvailable": true,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "durationSeconds": 10,
+      "width": 1280,
+      "height": 720,
+      "codec": "h264"
+    }
+  ]
+}

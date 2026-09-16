@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, ShieldCheck, Zap, Activity, Cpu, Database,
@@ -21,6 +21,73 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
   const [activePreviewTab, setActivePreviewTab] = useState<'compute' | 'emissions' | 'anomalies' | 'interventions'>('compute');
 
+  // Video scroll-scrubbing engine
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const targetTimeRef = useRef(0);
+  const currentTimeRef = useRef(0);
+  const isSeekingRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Ensure video is strictly paused so it never plays autonomously or vibrates
+    video.pause();
+
+    const handleLoadedMetadata = () => {
+      video.currentTime = 0;
+    };
+
+    const handleSeeked = () => {
+      isSeekingRef.current = false;
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('seeked', handleSeeked);
+
+    const onScrollOrResize = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+
+      // Cover 85-90% of page height through the main content journey
+      const scrubRange = scrollHeight * 0.88;
+      const progress = Math.min(Math.max(scrollY / scrubRange, 0), 1);
+      const duration = video.duration || 10;
+      targetTimeRef.current = progress * duration;
+    };
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    onScrollOrResize();
+
+    // 60fps RAF loop with smooth lerping for instant responsive seeking without lag
+    const renderLoop = () => {
+      if (video && video.readyState >= 2) {
+        const delta = targetTimeRef.current - currentTimeRef.current;
+        if (Math.abs(delta) > 0.004) {
+          currentTimeRef.current += delta * 0.22;
+          if (!isSeekingRef.current) {
+            isSeekingRef.current = true;
+            video.currentTime = currentTimeRef.current;
+          }
+        }
+      }
+      rafIdRef.current = requestAnimationFrame(renderLoop);
+    };
+
+    rafIdRef.current = requestAnimationFrame(renderLoop);
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('seeked', handleSeeked);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
+
   // Deterministic 24-interval profile
   const energySeries = [
     15.2, 14.8, 14.1, 13.9, 14.2, 15.6,
@@ -33,6 +100,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   return (
     <div className="landing-page" id="landing-root">
+      {/* ── Pinned 3D Scroll-Driven Video Stage (Spans 85-90% of page) ── */}
+      <div className="pinned-scroll-video-stage" aria-hidden="true">
+        <video
+          ref={videoRef}
+          className="pinned-scroll-video-element"
+          src="/assets/datacenter-flythrough-scrub.mp4"
+          poster="/assets/datacenter-flythrough-poster.jpg"
+          muted
+          playsInline
+          preload="auto"
+        />
+        <div className="pinned-scroll-video-overlay" />
+      </div>
+
       {/* ── Sticky Navigation Bar ───────────────────────────────────── */}
       <header className="landing-nav-wrap">
         <nav className="landing-nav" aria-label="Landing Page Navigation">
@@ -67,21 +148,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </nav>
       </header>
 
-      {/* ── Fullscreen Hero with Looping Motion Video ─────────────────── */}
+      {/* ── Fullscreen Hero ─────────────────────────────────────────── */}
       <section className="landing-hero" id="overview">
-        <div className="hero-video-container" aria-hidden="true">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="hero-video-element"
-            poster="/assets/hero-datacenter.jpg"
-          >
-            <source src="/assets/hero-motion-loop.mp4" type="video/mp4" />
-          </video>
-          <div className="hero-overlay-gradient" />
-        </div>
 
         <motion.div
           className="hero-content"
