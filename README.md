@@ -507,25 +507,3 @@ Follow Step 1 above to deploy `terraops-api` on Render.
 
 ---
 
-## License & Ethical Mandate
-
-TerraOps is released under the **MIT License**.
-
-```text
-MIT License
-
-Copyright (c) 2026 TerraOps Engineering Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
-### Environmental Integrity Guarantee
-TerraOps is developed in alignment with **UN SDG 13 (Climate Action)**. We explicitly forbid using this platform to fabricate carbon offsets, misrepresent grid factor data, or generate misleading sustainability reports ("greenwashing"). All algorithms, emissions factors, and recommendations must remain mathematically verifiable and grounded in authoritative data.
