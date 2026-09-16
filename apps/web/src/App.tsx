@@ -18,6 +18,7 @@ import {
 import { Sidebar, TabKey } from './components/Sidebar';
 import { Topbar, PAGE_META } from './components/Topbar';
 import { LandingPage } from './components/LandingPage';
+import { SiteLoader } from './components/SiteLoader';
 import { useTheme } from './hooks/useTheme';
 import { DataBanner } from './components/DataBanner';
 import { KpiCard } from './components/KpiCard';
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
 
   // ── UI state ─────────────────────────────────────────────────────────
   const [activeTab, setActiveTab]     = useState<TabKey>('landing');
+  const [siteReady, setSiteReady]     = useState(false);
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [anomalyMethod, setAnomalyMethod] = useState('rolling_zscore');
@@ -212,16 +214,32 @@ export const App: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────
   if (activeTab === 'landing') {
     return (
-      <LandingPage
-        onLaunchDashboard={() => setActiveTab('overview')}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+      <>
+        {!siteReady && (
+          <SiteLoader
+            theme={theme}
+            onComplete={() => setSiteReady(true)}
+          />
+        )}
+        <LandingPage
+          onLaunchDashboard={() => setActiveTab('overview')}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onReplayCalibration={() => setSiteReady(false)}
+        />
+      </>
     );
   }
 
   return (
-    <div className="app-shell">
+    <>
+      {!siteReady && (
+        <SiteLoader
+          theme={theme}
+          onComplete={() => setSiteReady(true)}
+        />
+      )}
+      <div className="app-shell">
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -682,5 +700,6 @@ export const App: React.FC = () => {
         </main>
       </div>
     </div>
+    </>
   );
 };

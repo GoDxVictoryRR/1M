@@ -12,12 +12,14 @@ export interface LandingPageProps {
   readonly onLaunchDashboard: () => void;
   readonly theme: Theme;
   readonly onToggleTheme: () => void;
+  readonly onReplayCalibration?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onLaunchDashboard,
   theme,
   onToggleTheme,
+  onReplayCalibration,
 }) => {
   const [activePreviewTab, setActivePreviewTab] = useState<'compute' | 'emissions' | 'anomalies' | 'interventions'>('compute');
 
@@ -163,6 +165,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
+            onClick={onReplayCalibration}
+            style={{ cursor: onReplayCalibration ? 'pointer' : 'default' }}
+            title={onReplayCalibration ? 'Click to re-run telemetry calibration boot sequence' : undefined}
           >
             <span className="status-indicator-beacon" />
             <span>Deterministic Sustainability DSS · UN SDG 13</span>
