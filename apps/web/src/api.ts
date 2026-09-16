@@ -56,6 +56,14 @@ export interface IngestionResult {
     message: string;
     error_code: string;
   }>;
+  records?: Array<{
+    timestamp: string;
+    resource_id: string;
+    resource_type: string;
+    utilization: number;
+    energy_kwh: number;
+    region: string;
+  }>;
   raw_sample: any[];
 }
 
