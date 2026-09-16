@@ -199,7 +199,10 @@ export interface RagDocumentInfo {
   url: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const rawBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || 'http://localhost:8000';
+const API_BASE_URL = (rawBaseUrl.startsWith('http://') || rawBaseUrl.startsWith('https://') 
+  ? rawBaseUrl 
+  : `https://${rawBaseUrl}`).replace(/\/+$/, '');
 
 export async function fetchHealth(): Promise<HealthResponse> {
   const res = await fetch(`${API_BASE_URL}/health`);

@@ -1,0 +1,44 @@
+services:
+  # -------------------------------------------------------------
+  # Backend API Service (FastAPI + Python 3.11 + SQLite)
+  # -------------------------------------------------------------
+  - type: web
+    name: terraops-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install --upgrade pip && pip install -e .
+    startCommand: uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_PATH
+        value: data/terraops.db
+      - key: CORS_ORIGINS
+        value: https://terraops-web.onrender.com,http://localhost:5173
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "30"
+
+  # -------------------------------------------------------------
+  # Frontend Static Site (Vite + React 18 + Tailwind + Video CDN)
+  # -------------------------------------------------------------
+  - type: static
+    name: terraops-web
+    rootDir: apps/web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: terraops-api
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
