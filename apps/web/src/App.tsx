@@ -73,6 +73,7 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab]     = useState<TabKey>('landing');
   const [siteReady, setSiteReady]     = useState(false);
   const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [anomalyMethod, setAnomalyMethod] = useState('rolling_zscore');
@@ -254,7 +255,18 @@ export const App: React.FC = () => {
         onTabChange={setActiveTab}
         anomaliesCount={anomalies?.anomalies_detected}
         interventionsCount={recommendations?.items.length}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
       />
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Main Container */}
       <div className="main-content">
@@ -269,6 +281,7 @@ export const App: React.FC = () => {
           onExport={() => window.print()}
           onGoToLanding={() => setActiveTab('landing')}
           isRefreshing={loading}
+          onToggleMobileNav={() => setMobileNavOpen(prev => !prev)}
         />
 
         {/* Page body */}

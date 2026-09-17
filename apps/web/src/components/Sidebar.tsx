@@ -11,6 +11,7 @@ import React from 'react';
 import {
   BoltIcon, GridIcon, ChartIcon, WarningIcon,
   SparkleIcon, BookIcon, RobotIcon, ShieldIcon, LeafIcon,
+  CloseIcon,
 } from './icons';
 
 export type TabKey = 'landing' | 'overview' | 'kpis' | 'anomalies' | 'interventions' | 'knowledge' | 'assistant' | 'audit';
@@ -28,11 +29,14 @@ export interface SidebarProps {
   readonly onTabChange: (tab: TabKey) => void;
   readonly anomaliesCount?: number;
   readonly interventionsCount?: number;
+  readonly isOpen?: boolean;
+  readonly onClose?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab, onTabChange,
   anomaliesCount, interventionsCount,
+  isOpen = false, onClose,
 }) => {
   const analyticsItems: NavItem[] = [
     { key: 'overview',      label: 'Overview',             icon: <GridIcon /> },
@@ -59,12 +63,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { key: 'audit',        label: 'Audit & Environment',   icon: <ShieldIcon /> },
   ];
 
+  const handleSelect = (key: TabKey) => {
+    onTabChange(key);
+    onClose?.();
+  };
+
   const renderNavGroup = (items: NavItem[]) => (
     items.map(item => (
       <button
         key={item.key}
         className={`nav-item${activeTab === item.key ? ' active' : ''}`}
-        onClick={() => onTabChange(item.key)}
+        onClick={() => handleSelect(item.key)}
         aria-current={activeTab === item.key ? 'page' : undefined}
         type="button"
       >
@@ -80,27 +89,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   return (
-    <aside className="sidebar">
-      {/* Brand Header */}
-      <div
-        className="sidebar-brand"
-        onClick={() => onTabChange('landing')}
-        style={{ cursor: 'pointer' }}
-        title="Return to Landing Page"
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => { if (e.key === 'Enter') onTabChange('landing'); }}
-      >
-        <div className="sidebar-logo" aria-hidden="true">
-          <BoltIcon />
-        </div>
-        <div className="sidebar-brand-text">
-          <div className="sidebar-brand-name-wrap">
-            <span className="sidebar-brand-name">TerraOps</span>
-            <span className="sidebar-brand-version">v0.1</span>
+    <aside className={`sidebar${isOpen ? ' open' : ''}`}>
+      {/* Brand Header with optional close button on mobile */}
+      <div className="sidebar-brand">
+        <div
+          className="sidebar-brand-click"
+          onClick={() => handleSelect('landing')}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}
+          title="Return to Landing Page"
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter') handleSelect('landing'); }}
+        >
+          <div className="sidebar-logo" aria-hidden="true">
+            <BoltIcon />
           </div>
-          <span className="sidebar-brand-sub">Sustainability DSS</span>
+          <div className="sidebar-brand-text">
+            <div className="sidebar-brand-name-wrap">
+              <span className="sidebar-brand-name">TerraOps</span>
+              <span className="sidebar-brand-version">v0.1</span>
+            </div>
+            <span className="sidebar-brand-sub">Sustainability DSS</span>
+          </div>
         </div>
+
+        {onClose && (
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Close navigation"
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
 
       {/* Navigation Sections */}
@@ -109,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             className={`nav-item${activeTab === 'landing' ? ' active' : ''}`}
-            onClick={() => onTabChange('landing')}
+            onClick={() => handleSelect('landing')}
             aria-current={activeTab === 'landing' ? 'page' : undefined}
           >
             <span className="nav-item-icon" aria-hidden="true"><SparkleIcon /></span>

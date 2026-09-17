@@ -2,7 +2,7 @@
  * Topbar — Institutional sticky header with breadcrumbs, system telemetry, and actions.
  */
 import React from 'react';
-import { RefreshIcon, DownloadIcon, ActivityIcon } from './icons';
+import { RefreshIcon, DownloadIcon, ActivityIcon, MenuIcon } from './icons';
 import { TabKey } from './Sidebar';
 import { ThemeToggle } from './ThemeToggle';
 import { Theme } from '../hooks/useTheme';
@@ -28,31 +28,46 @@ export interface TopbarProps {
   readonly onExport: () => void;
   readonly onGoToLanding?: () => void;
   readonly isRefreshing?: boolean;
+  readonly onToggleMobileNav?: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
   activeTab, apiStatus, aiProvider, theme, onToggleTheme,
   onRefresh, onExport, onGoToLanding, isRefreshing = false,
+  onToggleMobileNav,
 }) => {
   const meta = PAGE_META[activeTab];
 
   return (
     <header className="topbar">
-      {/* Breadcrumbs */}
-      <div className="topbar-breadcrumb">
-        <button
-          type="button"
-          onClick={onGoToLanding}
-          className="breadcrumb-root"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          title="Return to Landing Page"
-        >
-          TerraOps
-        </button>
-        <span className="breadcrumb-sep" aria-hidden="true">/</span>
-        <span className="breadcrumb-category">{meta.category}</span>
-        <span className="breadcrumb-sep" aria-hidden="true">/</span>
-        <span className="breadcrumb-page">{meta.title}</span>
+      <div className="topbar-left">
+        {onToggleMobileNav && (
+          <button
+            type="button"
+            className="topbar-mobile-toggle"
+            onClick={onToggleMobileNav}
+            aria-label="Toggle navigation drawer"
+          >
+            <MenuIcon />
+          </button>
+        )}
+
+        {/* Breadcrumbs */}
+        <div className="topbar-breadcrumb">
+          <button
+            type="button"
+            onClick={onGoToLanding}
+            className="breadcrumb-root"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            title="Return to Landing Page"
+          >
+            TerraOps
+          </button>
+          <span className="breadcrumb-sep" aria-hidden="true">/</span>
+          <span className="breadcrumb-category">{meta.category}</span>
+          <span className="breadcrumb-sep" aria-hidden="true">/</span>
+          <span className="breadcrumb-page">{meta.title}</span>
+        </div>
       </div>
 
       {/* Right Telemetry & Actions */}

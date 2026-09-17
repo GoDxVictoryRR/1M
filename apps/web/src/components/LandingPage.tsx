@@ -637,8 +637,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="bento-grid">
           {/* Card 1: Renewable Grid Integration (8 col) */}
           <motion.div
-            className="bento-card"
-            style={{ gridColumn: 'span 8' }}
+            className="bento-card bento-card--lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -668,8 +667,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Card 2: Offline Vectorless RAG (4 col) */}
           <motion.div
-            className="bento-card"
-            style={{ gridColumn: 'span 4' }}
+            className="bento-card bento-card--sm"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -693,8 +691,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Card 3: Read-Only Sandboxed Decision Assistant (4 col) */}
           <motion.div
-            className="bento-card"
-            style={{ gridColumn: 'span 4' }}
+            className="bento-card bento-card--sm"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -718,8 +715,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Card 4: Anomaly Radar & Forecast (8 col) */}
           <motion.div
-            className="bento-card"
-            style={{ gridColumn: 'span 8' }}
+            className="bento-card bento-card--lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
