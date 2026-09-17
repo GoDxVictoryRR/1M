@@ -63,7 +63,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           >
             TerraOps
           </button>
-          <span className="breadcrumb-sep" aria-hidden="true">/</span>
+          <span className="breadcrumb-sep breadcrumb-sep--category" aria-hidden="true">/</span>
           <span className="breadcrumb-category">{meta.category}</span>
           <span className="breadcrumb-sep" aria-hidden="true">/</span>
           <span className="breadcrumb-page">{meta.title}</span>

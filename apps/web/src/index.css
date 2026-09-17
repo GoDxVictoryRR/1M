@@ -3579,6 +3579,36 @@ body {
   .bento-card-media {
     height: 200px;
   }
+
+  /* Cockpit Topbar on Tablet */
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .breadcrumb-category,
+  .breadcrumb-sep--category {
+    display: none;
+  }
+
+  .engine-badge-pill {
+    display: none;
+  }
+
+  .api-provider-text,
+  .api-status-sep {
+    display: none;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+
+  .theme-toggle-btn {
+    padding: 7px;
+    min-width: 34px;
+    height: 34px;
+    justify-content: center;
+  }
 }
 
 /* Mobile Phones (<= 768px) */
@@ -3748,22 +3778,58 @@ body {
     padding-top: 6px;
     padding-bottom: 6px;
     gap: 8px;
+    justify-content: space-between;
+  }
+
+  .topbar-left {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .topbar-right {
+    gap: 6px;
+    flex-shrink: 0;
   }
 
   .breadcrumb-category,
-  .breadcrumb-sep {
+  .breadcrumb-sep--category {
     display: none;
   }
 
   .api-status-pill {
-    padding: 4px 8px;
-    font-size: 0.7rem;
+    padding: 8px;
+    border-radius: 50%;
   }
 
+  .api-status-pill .api-status-text,
+  .api-status-pill .api-status-sep,
   .api-provider-text,
   .api-status-sep,
   .engine-badge-pill {
     display: none;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+
+  .theme-toggle-btn {
+    padding: 7px;
+    min-width: 34px;
+    height: 34px;
+    justify-content: center;
+  }
+
+  .topbar-actions .btn span {
+    display: none;
+  }
+
+  .topbar-actions .btn {
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    justify-content: center;
   }
 
   /* Cockpit Page Body & Containers */
