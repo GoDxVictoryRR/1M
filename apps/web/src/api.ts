@@ -199,10 +199,47 @@ export interface RagDocumentInfo {
   url: string;
 }
 
-const rawBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || 'http://localhost:8000';
-const API_BASE_URL = (rawBaseUrl.startsWith('http://') || rawBaseUrl.startsWith('https://') 
-  ? rawBaseUrl 
-  : `https://${rawBaseUrl}`).replace(/\/+$/, '');
+function getInitialApiUrl(): string {
+  // 1. Check for manual local override (e.g. for testing or custom endpoints)
+  if (typeof window !== 'undefined') {
+    const local = window.localStorage.getItem('terraops_api_url');
+    if (local && local.trim()) return local.trim().replace(/\/+$/, '');
+  }
+
+  const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  
+  if (envUrl) {
+    let url = envUrl;
+    // If Render passed a service name without protocol (e.g. "terraops-api")
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (!url.includes('.') && !url.includes('localhost')) {
+        url = `${url}.onrender.com`;
+      }
+      url = `https://${url}`;
+    } else {
+      // If passed as https://terraops-api without domain suffix
+      try {
+        const parsed = new URL(url);
+        if (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost') {
+          parsed.hostname = `${parsed.hostname}.onrender.com`;
+          url = parsed.origin;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return url.replace(/\/+$/, '');
+  }
+
+  // If deployed on Render and no VITE_API_URL was baked in:
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('onrender.com')) {
+    return 'https://terraops-api.onrender.com';
+  }
+
+  return 'http://localhost:8000';
+}
+
+export const API_BASE_URL = getInitialApiUrl();
 
 export async function fetchHealth(): Promise<HealthResponse> {
   const res = await fetch(`${API_BASE_URL}/health`);

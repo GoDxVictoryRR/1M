@@ -36,10 +36,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: terraops-api
-          property: host
+        value: https://terraops-api.onrender.com
     routes:
       - type: rewrite
         source: /*
