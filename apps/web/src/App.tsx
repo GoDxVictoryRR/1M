@@ -72,6 +72,7 @@ export const App: React.FC = () => {
   // ── UI state ─────────────────────────────────────────────────────────
   const [activeTab, setActiveTab]     = useState<TabKey>('landing');
   const [siteReady, setSiteReady]     = useState(false);
+  const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [anomalyMethod, setAnomalyMethod] = useState('rolling_zscore');
@@ -218,7 +219,10 @@ export const App: React.FC = () => {
         {!siteReady && (
           <SiteLoader
             theme={theme}
-            onComplete={() => setSiteReady(true)}
+            onComplete={(blobUrl) => {
+              if (blobUrl) setVideoBlobUrl(blobUrl);
+              setSiteReady(true);
+            }}
           />
         )}
         <LandingPage
@@ -226,6 +230,7 @@ export const App: React.FC = () => {
           theme={theme}
           onToggleTheme={toggleTheme}
           onReplayCalibration={() => setSiteReady(false)}
+          videoSrc={videoBlobUrl || undefined}
         />
       </>
     );
@@ -236,7 +241,10 @@ export const App: React.FC = () => {
       {!siteReady && (
         <SiteLoader
           theme={theme}
-          onComplete={() => setSiteReady(true)}
+          onComplete={(blobUrl) => {
+            if (blobUrl) setVideoBlobUrl(blobUrl);
+            setSiteReady(true);
+          }}
         />
       )}
       <div className="app-shell">

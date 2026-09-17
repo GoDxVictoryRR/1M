@@ -13,6 +13,7 @@ export interface LandingPageProps {
   readonly theme: Theme;
   readonly onToggleTheme: () => void;
   readonly onReplayCalibration?: () => void;
+  readonly videoSrc?: string;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -20,6 +21,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   theme,
   onToggleTheme,
   onReplayCalibration,
+  videoSrc,
 }) => {
   const [activePreviewTab, setActivePreviewTab] = useState<'compute' | 'emissions' | 'anomalies' | 'interventions'>('compute');
 
@@ -28,6 +30,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const targetTimeRef = useRef(0);
   const currentTimeRef = useRef(0);
   const isSeekingRef = useRef(false);
+  const lastSeekTimeRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -37,8 +40,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     // Ensure video is strictly paused so it never plays autonomously or vibrates
     video.pause();
 
+    const updateTargetFromScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+
+      // Cover 88% of page height through the main content journey
+      const scrubRange = scrollHeight * 0.88;
+      const progress = Math.min(Math.max(scrollY / scrubRange, 0), 1);
+      const duration = video.duration || 10;
+      // Clamp slightly below duration to avoid browser EOF clamp
+      targetTimeRef.current = progress * Math.max(0, duration - 0.05);
+    };
+
     const handleLoadedMetadata = () => {
-      video.currentTime = 0;
+      video.pause();
+      updateTargetFromScroll();
+      currentTimeRef.current = targetTimeRef.current;
+      video.currentTime = targetTimeRef.current;
     };
 
     const handleSeeked = () => {
@@ -48,31 +67,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('seeked', handleSeeked);
 
-    const onScrollOrResize = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollHeight <= 0) return;
+    window.addEventListener('scroll', updateTargetFromScroll, { passive: true });
+    window.addEventListener('resize', updateTargetFromScroll, { passive: true });
+    updateTargetFromScroll();
 
-      // Cover 85-90% of page height through the main content journey
-      const scrubRange = scrollHeight * 0.88;
-      const progress = Math.min(Math.max(scrollY / scrubRange, 0), 1);
-      const duration = video.duration || 10;
-      targetTimeRef.current = progress * duration;
-    };
-
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize, { passive: true });
-    onScrollOrResize();
+    let lastFrameTime = performance.now();
 
     // 60fps RAF loop with smooth lerping for instant responsive seeking without lag
-    const renderLoop = () => {
+    const renderLoop = (now: number) => {
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+      lastFrameTime = now;
+
       if (video && video.readyState >= 2) {
         const delta = targetTimeRef.current - currentTimeRef.current;
-        if (Math.abs(delta) > 0.004) {
-          currentTimeRef.current += delta * 0.22;
-          if (!isSeekingRef.current) {
+        if (Math.abs(delta) > 0.002) {
+          // Lerp factor tuned for ultra-responsive 60fps following
+          currentTimeRef.current += delta * Math.min(1, 15 * dt);
+
+          const timeSinceLastSeek = now - lastSeekTimeRef.current;
+          // Seek if video is not actively seeking or if >50ms elapsed since last seek
+          if (!video.seeking && (!isSeekingRef.current || timeSinceLastSeek > 50)) {
             isSeekingRef.current = true;
-            video.currentTime = currentTimeRef.current;
+            lastSeekTimeRef.current = now;
+            if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
+              (video as any).fastSeek(currentTimeRef.current);
+            } else {
+              video.currentTime = currentTimeRef.current;
+            }
           }
         }
       }
@@ -82,13 +103,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     rafIdRef.current = requestAnimationFrame(renderLoop);
 
     return () => {
-      window.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', updateTargetFromScroll);
+      window.removeEventListener('resize', updateTargetFromScroll);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('seeked', handleSeeked);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, []);
+  }, [videoSrc]);
 
   // Deterministic 24-interval profile
   const energySeries = [
@@ -107,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <video
           ref={videoRef}
           className="pinned-scroll-video-element"
-          src="/assets/datacenter-flythrough-scrub.mp4"
+          src={videoSrc || '/assets/datacenter-flythrough-scrub.mp4'}
           poster="/assets/datacenter-flythrough-poster.jpg"
           muted
           playsInline

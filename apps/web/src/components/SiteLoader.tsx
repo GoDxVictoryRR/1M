@@ -14,11 +14,13 @@ import { motion } from 'framer-motion';
 
 interface SiteLoaderProps {
   theme?: 'dark' | 'light';
-  onComplete: () => void;
+  onComplete: (videoBlobUrl?: string) => void;
+  videoSrcToPreload?: string;
 }
 
 const TELEMETRY_STAGES = [
   'INITIALIZING COMPUTE BUS // PYDANTIC V2 STREAMING',
+  'STREAMING 3D TELEMETRY MESH // BUFFERING SPATIAL ASSET',
   'MOUNTING EPA eGRID RFC EAST // 0.312 kgCO₂e/kWh',
   'LOCKING STATISTICAL SENTINEL // 3.0σ CORRIDOR',
   'COMPUTE TOPOLOGY READY // DETERMINISTIC CORE ONLINE',
@@ -27,44 +29,153 @@ const TELEMETRY_STAGES = [
 const COLUMNS = [0, 1, 2, 3, 4];
 const SPECTRUM_BARS = Array.from({ length: 14 });
 
-export const SiteLoader: React.FC<SiteLoaderProps> = ({ theme = 'dark', onComplete }) => {
+export const SiteLoader: React.FC<SiteLoaderProps> = ({
+  theme = 'dark',
+  onComplete,
+  videoSrcToPreload = '/assets/datacenter-flythrough-scrub.mp4',
+}) => {
   const [progress, setProgress] = useState(0);
   const [isDone, setIsDone] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoBufferPct, setVideoBufferPct] = useState(0);
 
   const isLight = theme === 'light';
+  const blobUrlRef = React.useRef<string | null>(null);
+  const isDoneRef = React.useRef(false);
 
+  // ── Preload Background Video into in-memory Blob URL ──────────────
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    // Safety timeout: ensure loader never hangs if connection is slow
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) {
+        setVideoLoaded(true);
+        setVideoBufferPct(100);
+      }
+    }, 4500);
+
+    const targetSrc = videoSrcToPreload;
+
+    fetch(targetSrc, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const total = Number(res.headers.get('Content-Length')) || 10371072;
+
+        if (!res.body) {
+          const blob = await res.blob();
+          if (!cancelled) {
+            blobUrlRef.current = URL.createObjectURL(blob);
+            setVideoBufferPct(100);
+            setVideoLoaded(true);
+          }
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const chunks: BlobPart[] = [];
+        let loaded = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            chunks.push(value);
+            loaded += value.length;
+            if (total > 0 && !cancelled) {
+              const pct = Math.min(100, Math.round((loaded / total) * 100));
+              setVideoBufferPct(pct);
+            }
+          }
+        }
+
+        if (!cancelled) {
+          const blob = new Blob(chunks, { type: 'video/mp4' });
+          blobUrlRef.current = URL.createObjectURL(blob);
+          setVideoBufferPct(100);
+          setVideoLoaded(true);
+        }
+      })
+      .catch((_err) => {
+        if (!cancelled) {
+          // Graceful fallback to streaming without halting page load
+          setVideoLoaded(true);
+          setVideoBufferPct(100);
+        }
+      })
+      .finally(() => {
+        clearTimeout(safetyTimer);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(safetyTimer);
+    };
+  }, [videoSrcToPreload]);
+
+  // ── Early skip handler ───────────────────────────────────────────
+  const finishEarly = React.useCallback(() => {
+    if (isDoneRef.current) return;
+    isDoneRef.current = true;
+    setIsDone(true);
+    setTimeout(() => {
+      onComplete(blobUrlRef.current || undefined);
+    }, 250);
+  }, [onComplete]);
+
+  // Keyboard shortcut: ESC to skip
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') finishEarly();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [finishEarly]);
+
+  // ── Kinetic Shutter Counter & Completion Orchestrator ────────────
   useEffect(() => {
     const startTime = performance.now();
-    const duration = 1400; // 1.4s smooth calibration
-
+    const minDuration = 1250; // Minimum 1.25s for cinematic kinetic feel
     let raf: number;
 
     const tick = (now: number) => {
+      if (isDoneRef.current) return;
+
       const elapsed = now - startTime;
-      const raw = Math.min(1, elapsed / duration);
+      const timeRaw = Math.min(1, elapsed / minDuration);
       // Cinematic cubic ease-out
-      const eased = 1 - Math.pow(1 - raw, 3);
-      const current = Math.round(eased * 100);
+      const timeEased = 1 - Math.pow(1 - timeRaw, 3);
+      const timePct = Math.round(timeEased * 100);
+
+      // Harmonize timer progress with video buffer stream
+      const current = videoLoaded
+        ? timePct
+        : Math.min(timePct, Math.max(videoBufferPct, Math.round(timePct * 0.75)));
 
       setProgress(current);
 
-      if (raw < 1) {
-        raf = requestAnimationFrame(tick);
-      } else {
+      if (timeRaw >= 1 && videoLoaded) {
         setProgress(100);
+        isDoneRef.current = true;
         setTimeout(() => {
           setIsDone(true);
           // Allow all 5 staggered columns to finish sliding up before unmounting
-          setTimeout(onComplete, 750);
+          setTimeout(() => {
+            onComplete(blobUrlRef.current || undefined);
+          }, 750);
         }, 160);
+      } else {
+        raf = requestAnimationFrame(tick);
       }
     };
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [onComplete]);
+  }, [videoLoaded, videoBufferPct, onComplete]);
 
-  const stageIndex = progress < 25 ? 0 : progress < 55 ? 1 : progress < 85 ? 2 : 3;
+  const stageIndex = progress < 20 ? 0 : progress < 45 ? 1 : progress < 70 ? 2 : progress < 90 ? 3 : 4;
 
   return (
     <div
@@ -120,10 +231,7 @@ export const SiteLoader: React.FC<SiteLoaderProps> = ({ theme = 'dark', onComple
             <button
               type="button"
               className="awwwards-skip-btn"
-              onClick={() => {
-                setIsDone(true);
-                setTimeout(onComplete, 250);
-              }}
+              onClick={finishEarly}
             >
               SKIP [ESC]
             </button>
