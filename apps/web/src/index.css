@@ -1015,6 +1015,8 @@ body {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .topbar-mobile-toggle {
@@ -1046,29 +1048,43 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 0.84rem;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .breadcrumb-root {
   color: var(--text-muted);
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .breadcrumb-category {
   color: var(--text-secondary);
   font-size: 0.8rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .breadcrumb-sep {
   color: var(--text-muted);
   opacity: 0.4;
+  flex-shrink: 0;
 }
 .breadcrumb-page {
   color: var(--text-primary);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .api-status-pill {
@@ -1684,6 +1700,14 @@ body {
   border-radius: var(--r-sm);
   padding: 3px;
   gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.toggle-group::-webkit-scrollbar {
+  display: none;
 }
 
 .toggle-btn {
@@ -3580,34 +3604,74 @@ body {
     height: 200px;
   }
 
-  /* Cockpit Topbar on Tablet */
+  /* Cockpit Topbar on Tablet & Mobile (<= 1024px) */
   .topbar {
     padding: 0 16px;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    gap: 8px;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .topbar-right {
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .breadcrumb-category,
   .breadcrumb-sep--category {
-    display: none;
+    display: none !important;
   }
 
   .engine-badge-pill {
-    display: none;
+    display: none !important;
   }
 
+  /* Compact status beacon dot on tablet & mobile */
+  .api-status-pill {
+    padding: 8px !important;
+    border-radius: 50% !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .api-status-pill .api-status-text,
+  .api-status-pill .api-status-sep,
   .api-provider-text,
   .api-status-sep {
-    display: none;
+    display: none !important;
   }
 
   .theme-toggle-label {
-    display: none;
+    display: none !important;
   }
 
   .theme-toggle-btn {
-    padding: 7px;
-    min-width: 34px;
-    height: 34px;
-    justify-content: center;
+    padding: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .topbar-actions .btn span {
+    display: none !important;
+  }
+
+  .topbar-actions .btn {
+    padding: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 }
 
